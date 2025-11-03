@@ -17,8 +17,5 @@ data:
       secretKeySecret:
         name: mlpipeline-minio-artifact
         key: secretkey
-  images: |
-    argocliImage: argoproj/argocli:v3.3.10
-    argoexecImage: argoproj/argoexec:v3.3.10
   executor: |
     imagePullPolicy: IfNotPresent

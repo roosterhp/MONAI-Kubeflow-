@@ -42,3 +42,7 @@ Thumbs.db
 hospital-mlops/demo/sample-data/*.nii.gz
 hospital-mlops/demo/sample-data/**
 !hospital-mlops/demo/sample-data/Task06_Lung/dataset.json
+*.npy
+inference_results.png
+model_info.*
+monai-demo/kubeflow_pipeline/kubeflow-data/

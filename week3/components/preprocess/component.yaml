@@ -1,0 +1,78 @@
+name: Preprocess Medical Images
+description: |
+  Preprocesses 2D medical images for EfficientNetV2 classification.
+  - Loads images (DICOM, PNG, JPG)
+  - Applies MONAI transforms
+  - Splits into train/val/test
+  - Computes dataset statistics
+
+inputs:
+  - name: raw_data_path
+    type: String
+    description: Path to raw data directory
+
+  - name: output_path
+    type: String
+    description: Path to save processed data
+
+  - name: image_size
+    type: JsonArray
+    description: Image size [height, width]
+    default: '[224, 224]'
+
+  - name: train_split
+    type: Float
+    description: Train split ratio
+    default: '0.7'
+
+  - name: val_split
+    type: Float
+    description: Validation split ratio
+    default: '0.2'
+
+  - name: test_split
+    type: Float
+    description: Test split ratio
+    default: '0.1'
+
+  - name: cache_rate
+    type: Float
+    description: Cache rate (0.0-1.0)
+    default: '1.0'
+
+outputs:
+  - name: processed_data_path
+    type: String
+    description: Path to processed data directory
+
+  - name: dataset_stats
+    type: JsonObject
+    description: Dataset statistics
+
+implementation:
+  container:
+    image: efficientnet-preprocess:v1
+    command:
+      - python
+      - /app/preprocess.py
+      - --raw-data-path
+      - {inputValue: raw_data_path}
+      - --output-path
+      - {inputValue: output_path}
+      - --image-size
+      - {inputValue: image_size}
+      - --train-split
+      - {inputValue: train_split}
+      - --val-split
+      - {inputValue: val_split}
+      - --test-split
+      - {inputValue: test_split}
+      - --cache-rate
+      - {inputValue: cache_rate}
+    resources:
+      requests:
+        cpu: "2"
+        memory: "8Gi"
+      limits:
+        cpu: "4"
+        memory: "16Gi"

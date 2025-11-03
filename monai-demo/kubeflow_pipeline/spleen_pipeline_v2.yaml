@@ -158,7 +158,7 @@ spec:
         parameters:
           - name: patient-id
       container:
-        image: spleen-pipeline:v5
+        image: spleen-pipeline:v6
         imagePullPolicy: Never
         command: [python, /app/components/load_data.py]
         args: ["{{inputs.parameters.patient-id}}"]
@@ -171,7 +171,7 @@ spec:
         parameters:
           - name: patient-id
       container:
-        image: spleen-pipeline:v5
+        image: spleen-pipeline:v6
         imagePullPolicy: Never
         command: [python, /app/components/preprocess.py]
         args: ["{{inputs.parameters.patient-id}}"]
@@ -184,7 +184,7 @@ spec:
         parameters:
           - name: patient-id
       container:
-        image: spleen-pipeline:v5
+        image: spleen-pipeline:v6
         imagePullPolicy: Never
         command: [python, /app/components/inference.py]
         args: ["{{inputs.parameters.patient-id}}"]
@@ -202,7 +202,7 @@ spec:
             path: /mnt/data/outputs/week_current/{{inputs.parameters.patient-id}}/result.png
             optional: false
       container:
-        image: spleen-pipeline:v5
+        image: spleen-pipeline:v6
         imagePullPolicy: Never
         command: [python, /app/components/visualize.py]
         args: ["{{inputs.parameters.patient-id}}"]
@@ -217,7 +217,7 @@ spec:
             path: /mnt/data/outputs/week_current/summary.html
             optional: false
       container:
-        image: spleen-pipeline:v5
+        image: spleen-pipeline:v6
         imagePullPolicy: Never
         command: [python, /app/components/summary.py]
         volumeMounts:
