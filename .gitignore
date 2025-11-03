@@ -37,3 +37,8 @@ nul
 # OS files
 .DS_Store
 Thumbs.db
+*.tar
+*.tar.gz
+hospital-mlops/demo/sample-data/*.nii.gz
+hospital-mlops/demo/sample-data/**
+!hospital-mlops/demo/sample-data/Task06_Lung/dataset.json

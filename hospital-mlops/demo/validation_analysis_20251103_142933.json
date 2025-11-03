@@ -1,0 +1,73 @@
+{
+  "total_cases": 5,
+  "timestamp": "2025-11-03T14:29:33.719777",
+  "agreement": {
+    "likelihood_agreement_rate": 60.0,
+    "severity_agreement_rate": 60.0,
+    "mean_probability_difference": 10.4,
+    "std_probability_difference": 12.306096050332128,
+    "median_probability_difference": 4.0
+  },
+  "disagreement_cases": [
+    "lung_004.nii",
+    "lung_006.nii"
+  ],
+  "rule_based_distribution": {
+    "HIGH": 0,
+    "MODERATE": 2,
+    "LOW-MODERATE": 0,
+    "LOW": 3
+  },
+  "monai_distribution": {
+    "HIGH": 0,
+    "MODERATE": 0,
+    "LOW-MODERATE": 1,
+    "LOW": 4
+  },
+  "inference_time": {
+    "lung_segmentation": {
+      "mean": 98.69265079498291,
+      "std": 38.32918142736776,
+      "median": 81.38169026374817,
+      "total": 493.46325397491455
+    },
+    "rule_based": {
+      "mean": 2.544185209274292,
+      "std": 1.2113811501551377,
+      "median": 1.9947192668914795,
+      "total": 12.72092604637146
+    },
+    "monai": {
+      "mean": 5.360600328445434,
+      "std": 2.939753431086701,
+      "median": 3.8650829792022705,
+      "total": 26.803001642227173
+    }
+  },
+  "metrics": {
+    "rule_based": {
+      "ggo": {
+        "mean": 8.174906467632276,
+        "std": 1.2098006862978186,
+        "median": 7.739959879314319
+      },
+      "consolidation": {
+        "mean": 3.5059552914704937,
+        "std": 0.5112633854756119,
+        "median": 3.7598460237639624
+      }
+    },
+    "monai": {
+      "ggo": {
+        "mean": 8.204078658268257,
+        "std": 2.971934031434457,
+        "median": 7.5352783454568595
+      },
+      "consolidation": {
+        "mean": 3.0401790355841554,
+        "std": 0.6254453609886338,
+        "median": 3.267494265335928
+      }
+    }
+  }
+}

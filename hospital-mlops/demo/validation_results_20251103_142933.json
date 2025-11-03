@@ -1,0 +1,162 @@
+[
+  {
+    "patient_id": "lung_001.nii",
+    "ct_shape": [
+      304,
+      512,
+      512
+    ],
+    "lung_segmentation_time": 81.38169026374817,
+    "rule_based": {
+      "likelihood": "LOW",
+      "probability": 26,
+      "severity": "MINIMAL",
+      "ggo_percentage": 7.2421882323834454,
+      "consolidation_percentage": 2.4976635505269136,
+      "inference_time": 1.9947192668914795
+    },
+    "monai": {
+      "likelihood": "LOW",
+      "probability": 30,
+      "severity": "MINIMAL",
+      "ggo_percentage": 5.7404194961308,
+      "consolidation_percentage": 1.9568630324449103,
+      "inference_time": 6.375786066055298
+    },
+    "comparison": {
+      "likelihood_agreement": true,
+      "severity_agreement": true,
+      "probability_difference": 4,
+      "ggo_difference": 1.5017687362526457,
+      "consolidation_difference": 0.5408005180820032
+    }
+  },
+  {
+    "patient_id": "lung_003.nii",
+    "ct_shape": [
+      288,
+      512,
+      512
+    ],
+    "lung_segmentation_time": 77.00404095649719,
+    "rule_based": {
+      "likelihood": "LOW",
+      "probability": 26,
+      "severity": "MINIMAL",
+      "ggo_percentage": 6.836454527923533,
+      "consolidation_percentage": 3.7598460237639624,
+      "inference_time": 1.7308087348937988
+    },
+    "monai": {
+      "likelihood": "LOW",
+      "probability": 30,
+      "severity": "MINIMAL",
+      "ggo_percentage": 4.955882531424341,
+      "consolidation_percentage": 3.267494265335928,
+      "inference_time": 2.8212859630584717
+    },
+    "comparison": {
+      "likelihood_agreement": true,
+      "severity_agreement": true,
+      "probability_difference": 4,
+      "ggo_difference": 1.8805719964991923,
+      "consolidation_difference": 0.49235175842803436
+    }
+  },
+  {
+    "patient_id": "lung_004.nii",
+    "ct_shape": [
+      276,
+      512,
+      512
+    ],
+    "lung_segmentation_time": 74.31516695022583,
+    "rule_based": {
+      "likelihood": "MODERATE",
+      "probability": 65,
+      "severity": "MODERATE",
+      "ggo_percentage": 8.893158146947306,
+      "consolidation_percentage": 3.7834534901442867,
+      "inference_time": 1.8147680759429932
+    },
+    "monai": {
+      "likelihood": "LOW-MODERATE",
+      "probability": 60,
+      "severity": "MILD",
+      "ggo_percentage": 13.229874802340614,
+      "consolidation_percentage": 2.82481427131052,
+      "inference_time": 3.0667192935943604
+    },
+    "comparison": {
+      "likelihood_agreement": false,
+      "severity_agreement": false,
+      "probability_difference": 5,
+      "ggo_difference": 4.3367166553933085,
+      "consolidation_difference": 0.9586392188337665
+    }
+  },
+  {
+    "patient_id": "lung_005.nii",
+    "ct_shape": [
+      329,
+      512,
+      512
+    ],
+    "lung_segmentation_time": 85.8111298084259,
+    "rule_based": {
+      "likelihood": "LOW",
+      "probability": 26,
+      "severity": "MINIMAL",
+      "ggo_percentage": 7.739959879314319,
+      "consolidation_percentage": 3.8769116255962452,
+      "inference_time": 2.2388522624969482
+    },
+    "monai": {
+      "likelihood": "LOW",
+      "probability": 30,
+      "severity": "MINIMAL",
+      "ggo_percentage": 7.5352783454568595,
+      "consolidation_percentage": 3.8107763444518743,
+      "inference_time": 3.8650829792022705
+    },
+    "comparison": {
+      "likelihood_agreement": true,
+      "severity_agreement": true,
+      "probability_difference": 4,
+      "ggo_difference": 0.20468153385745946,
+      "consolidation_difference": 0.06613528114437095
+    }
+  },
+  {
+    "patient_id": "lung_006.nii",
+    "ct_shape": [
+      567,
+      512,
+      512
+    ],
+    "lung_segmentation_time": 174.95122599601746,
+    "rule_based": {
+      "likelihood": "MODERATE",
+      "probability": 65,
+      "severity": "MODERATE",
+      "ggo_percentage": 10.162771551592776,
+      "consolidation_percentage": 3.611901767321063,
+      "inference_time": 4.94177770614624
+    },
+    "monai": {
+      "likelihood": "LOW",
+      "probability": 30,
+      "severity": "MINIMAL",
+      "ggo_percentage": 9.558938115988672,
+      "consolidation_percentage": 3.340947264377545,
+      "inference_time": 10.674127340316772
+    },
+    "comparison": {
+      "likelihood_agreement": false,
+      "severity_agreement": false,
+      "probability_difference": 35,
+      "ggo_difference": 0.6038334356041037,
+      "consolidation_difference": 0.2709545029435181
+    }
+  }
+]
