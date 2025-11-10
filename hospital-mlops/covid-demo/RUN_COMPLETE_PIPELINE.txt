@@ -1,0 +1,255 @@
+========================================
+COVID-19 DETECTION PIPELINE
+COMPLETE EXECUTION GUIDE
+========================================
+
+Created: 2025-11-05
+Ready to Run: YES
+
+========================================
+FOLDER STRUCTURE
+========================================
+
+covid-demo/
+├── input/                  ✅ 4 patient CT scans (429 MB)
+│   ├── lung_001.nii.gz    (115 MB)
+│   ├── lung_002.nii.gz    ( 94 MB)
+│   ├── lung_003.nii.gz    ( 94 MB)
+│   └── lung_004.nii.gz    (126 MB)
+│
+├── output/                 📁 Results will be here
+│   └── (empty - waiting for pipeline results)
+│
+├── components/             🔧 5 pipeline components
+├── kubernetes/             ☸️ PV and PVC configs
+└── covid_pipeline.yaml     📄 Kubeflow pipeline definition
+
+========================================
+STEP-BY-STEP EXECUTION
+========================================
+
+STEP 1: Upload Input Data
+--------------------------
+Command:
+  > .\UPLOAD_INPUT.ps1
+
+This will:
+  - Create /mnt/data/test_data/Task06_Lung/imagesTr/ in Minikube
+  - Upload 4 patient CT scans (lung_001 to lung_004)
+  - Verify files are in place
+
+Time: ~2-3 minutes (uploading 429 MB)
+
+Expected output:
+  ✓ lung_001.nii.gz uploaded
+  ✓ lung_002.nii.gz uploaded
+  ✓ lung_003.nii.gz uploaded
+  ✓ lung_004.nii.gz uploaded
+
+
+STEP 2: Build Docker Image
+---------------------------
+Command:
+  > .\BUILD_NOW.ps1
+
+This will:
+  - Set Minikube Docker environment
+  - Build covid-pipeline:v1 image
+  - Install all dependencies (MONAI, LungMask, etc.)
+
+Time: ~5-10 minutes (first build)
+
+Expected output:
+  ✓ Successfully built [image_id]
+  ✓ Successfully tagged covid-pipeline:v1
+
+
+STEP 3: Deploy Kubernetes Resources
+------------------------------------
+Already done! ✅
+
+  ✓ PersistentVolume: covid-data-pv (Bound)
+  ✓ PersistentVolumeClaim: covid-data-pvc (Bound)
+
+To verify:
+  > kubectl get pvc -n kubeflow
+  covid-data-pvc   Bound   covid-data-pv   20Gi   RWX
+
+
+STEP 4: Upload Pipeline to Kubeflow
+------------------------------------
+1. Open Kubeflow UI: http://localhost:8080
+
+2. Navigate to: Pipelines > Upload Pipeline
+
+3. Upload file: covid_pipeline.yaml
+
+4. Pipeline name: "COVID-19 Detection with Fine-tuning"
+
+5. Click "Create"
+
+
+STEP 5: Run Pipeline in Kubeflow
+---------------------------------
+1. Go to: Pipelines > COVID-19 Detection with Fine-tuning
+
+2. Click: "Create Run"
+
+3. Run settings:
+   - Run name: covid-week-001
+   - Experiment: (create new or select)
+   - Run type: One-off
+
+4. Click: "Start"
+
+5. Monitor execution in Kubeflow UI
+
+
+STEP 6: Wait for Pipeline Completion
+-------------------------------------
+Pipeline will execute:
+
+Parallel (4 patients):
+  lung_001: load_data → lung_segment → covid_detect → visualize
+  lung_002: load_data → lung_segment → covid_detect → visualize
+  lung_003: load_data → lung_segment → covid_detect → visualize
+  lung_004: load_data → lung_segment → covid_detect → visualize
+                            ↓
+                      finetune_model
+
+Expected time:
+  - Load data: ~10 sec x 4 = 40 sec (parallel)
+  - Lung segment: ~60 sec x 4 = 60 sec (parallel)
+  - COVID detect: ~20 sec x 4 = 20 sec (parallel)
+  - Visualize: ~10 sec x 4 = 10 sec (parallel)
+  - Fine-tune: ~3-5 minutes
+
+Total: ~6-8 minutes
+
+
+STEP 7: Download Results
+-------------------------
+After pipeline completes (all pods green ✓):
+
+Command:
+  > .\DOWNLOAD_OUTPUT.ps1
+
+This will download:
+  - full_comparison_lung_001.png  (visualization)
+  - full_comparison_lung_002.png
+  - full_comparison_lung_003.png
+  - full_comparison_lung_004.png
+  - covid_results_lung_XXX.json  (detection results)
+
+Results location:
+  E:\monai-kubeflow-demo\hospital-mlops\covid-demo\output\
+
+
+========================================
+EXPECTED OUTPUTS
+========================================
+
+For Each Patient (e.g., lung_001):
+
+1. Visualization Image: full_comparison_lung_001.png
+   ----------------------------------------------
+   2x3 Grid Layout:
+
+   Row 1:
+     [CT Scan]  [Lung Mask]  [COVID Overlay]
+
+   Row 2:
+     [Metrics]  [Features]   [Clinical Decision]
+
+   Details:
+     - CT Scan: Original grayscale CT
+     - Lung Mask: Green (right lung), Cyan (left lung)
+     - COVID Overlay: Yellow (GGO), Red (Consolidation)
+     - Metrics: GGO%, Consolidation%, Volumes
+     - Features: HU-based analysis
+     - Decision: Likelihood, Probability, Severity
+
+
+2. Detection Results: covid_results_lung_001.json
+   ------------------------------------------------
+   {
+     "patient_id": "lung_001",
+     "method": "rule_based",
+     "diagnosis": {
+       "covid_likelihood": "HIGH",
+       "covid_probability": 85,
+       "severity": "MODERATE"
+     },
+     "features": {
+       "ggo_percentage": 15.2,
+       "consolidation_percentage": 5.8,
+       "bilateral_involvement": true,
+       "ggo_volume_ml": 234.5,
+       "consolidation_volume_ml": 89.3
+     },
+     "inference_time": 12.5
+   }
+
+
+3. Fine-tuned Model:
+   ------------------
+   /mnt/data/covid_outputs/finetuned_models/
+     - finetuned_model_week_current.pth
+     - training_log_week_current.json
+
+
+========================================
+TROUBLESHOOTING
+========================================
+
+Issue 1: Pipeline pods pending
+-------------------------------
+Check:
+  > kubectl get pods -n kubeflow | grep covid
+
+If "ImagePullBackOff":
+  - Run .\BUILD_NOW.ps1 again
+  - Delete failed run in Kubeflow
+  - Create new run
+
+Issue 2: No output files
+-------------------------
+Check pipeline status in Kubeflow UI:
+  - All pods should be green (Succeeded)
+  - Check pod logs for errors
+
+Issue 3: Upload failed
+-----------------------
+Retry:
+  > .\UPLOAD_INPUT.ps1
+
+
+========================================
+QUICK COMMANDS SUMMARY
+========================================
+
+1. Upload input:    .\UPLOAD_INPUT.ps1
+2. Build image:     .\BUILD_NOW.ps1
+3. Run in Kubeflow: (manual - UI)
+4. Download output: .\DOWNLOAD_OUTPUT.ps1
+
+Check status:
+  > kubectl get pods -n kubeflow | grep covid
+  > kubectl get pvc -n kubeflow
+
+
+========================================
+COMPLETE WORKFLOW SUMMARY
+========================================
+
+✅ Input Ready:     input/ (4 patients, 429 MB)
+⏳ Step 1:          .\UPLOAD_INPUT.ps1
+⏳ Step 2:          .\BUILD_NOW.ps1
+✅ Step 3:          PVC already created
+⏳ Step 4:          Upload covid_pipeline.yaml to Kubeflow
+⏳ Step 5:          Create run in Kubeflow
+⏳ Step 6:          Wait for completion (~6-8 min)
+⏳ Step 7:          .\DOWNLOAD_OUTPUT.ps1
+✅ Output Ready:    output/ (4 PNG images + JSON)
+
+========================================

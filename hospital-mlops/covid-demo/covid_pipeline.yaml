@@ -1,0 +1,240 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: covid-19-detection-pipeline-with-fine-tuning-
+  annotations:
+    pipelines.kubeflow.org/kfp_sdk_version: 2.5.0
+    pipelines.kubeflow.org/pipeline_compilation_time: '2025-11-05T14:20:00'
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "COVID-19 CT detection:
+      load_data -> lung_segment -> covid_detect -> visualize -> finetune", "name":
+      "COVID-19 Detection Pipeline with Fine-tuning"}'
+  labels:
+    pipelines.kubeflow.org/kfp_sdk_version: 2.5.0
+spec:
+  entrypoint: covid-pipeline
+  serviceAccountName: pipeline-runner
+
+  volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: covid-data-pvc
+
+  templates:
+  # Main DAG template
+  - name: covid-pipeline
+    dag:
+      tasks:
+      # Patient 1: lung_001
+      - name: load-data-lung-001
+        template: load-data
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_001
+
+      - name: lung-segment-lung-001
+        template: lung-segment
+        dependencies: [load-data-lung-001]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_001
+
+      - name: covid-detect-lung-001
+        template: covid-detect
+        dependencies: [lung-segment-lung-001]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_001
+
+      - name: visualize-lung-001
+        template: visualize
+        dependencies: [covid-detect-lung-001]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_001
+
+      # Patient 2: lung_002
+      - name: load-data-lung-002
+        template: load-data
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_002
+
+      - name: lung-segment-lung-002
+        template: lung-segment
+        dependencies: [load-data-lung-002]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_002
+
+      - name: covid-detect-lung-002
+        template: covid-detect
+        dependencies: [lung-segment-lung-002]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_002
+
+      - name: visualize-lung-002
+        template: visualize
+        dependencies: [covid-detect-lung-002]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_002
+
+      # Patient 3: lung_003
+      - name: load-data-lung-003
+        template: load-data
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_003
+
+      - name: lung-segment-lung-003
+        template: lung-segment
+        dependencies: [load-data-lung-003]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_003
+
+      - name: covid-detect-lung-003
+        template: covid-detect
+        dependencies: [lung-segment-lung-003]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_003
+
+      - name: visualize-lung-003
+        template: visualize
+        dependencies: [covid-detect-lung-003]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_003
+
+      # Patient 4: lung_004
+      - name: load-data-lung-004
+        template: load-data
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_004
+
+      - name: lung-segment-lung-004
+        template: lung-segment
+        dependencies: [load-data-lung-004]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_004
+
+      - name: covid-detect-lung-004
+        template: covid-detect
+        dependencies: [lung-segment-lung-004]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_004
+
+      - name: visualize-lung-004
+        template: visualize
+        dependencies: [covid-detect-lung-004]
+        arguments:
+          parameters:
+          - name: patient-id
+            value: lung_004
+
+      # Fine-tuning (depends on all visualizations)
+      - name: finetune-model
+        template: finetune
+        dependencies:
+          - visualize-lung-001
+          - visualize-lung-002
+          - visualize-lung-003
+          - visualize-lung-004
+        arguments:
+          parameters:
+          - name: batch-id
+            value: week_current
+          - name: patient-list
+            value: lung_001,lung_002,lung_003,lung_004
+
+  # Component templates
+  - name: load-data
+    inputs:
+      parameters:
+      - name: patient-id
+    container:
+      image: covid-pipeline:v1
+      imagePullPolicy: IfNotPresent
+      command: [python, /app/components/load_data.py]
+      args: ["{{inputs.parameters.patient-id}}"]
+      volumeMounts:
+      - name: data-volume
+        mountPath: /mnt/data
+
+  - name: lung-segment
+    inputs:
+      parameters:
+      - name: patient-id
+    container:
+      image: covid-pipeline:v1
+      imagePullPolicy: IfNotPresent
+      command: [python, /app/components/lung_segment.py]
+      args: ["{{inputs.parameters.patient-id}}"]
+      volumeMounts:
+      - name: data-volume
+        mountPath: /mnt/data
+
+  - name: covid-detect
+    inputs:
+      parameters:
+      - name: patient-id
+    container:
+      image: covid-pipeline:v1
+      imagePullPolicy: IfNotPresent
+      command: [python, /app/components/covid_detect.py]
+      args: ["{{inputs.parameters.patient-id}}"]
+      volumeMounts:
+      - name: data-volume
+        mountPath: /mnt/data
+
+  - name: visualize
+    inputs:
+      parameters:
+      - name: patient-id
+    container:
+      image: covid-pipeline:v1
+      imagePullPolicy: IfNotPresent
+      command: [python, /app/components/visualize.py]
+      args: ["{{inputs.parameters.patient-id}}"]
+      volumeMounts:
+      - name: data-volume
+        mountPath: /mnt/data
+
+  - name: finetune
+    inputs:
+      parameters:
+      - name: batch-id
+      - name: patient-list
+    container:
+      image: covid-pipeline:v1
+      imagePullPolicy: IfNotPresent
+      command: [python, /app/components/finetune.py]
+      args:
+      - "{{inputs.parameters.batch-id}}"
+      - "lung_001"
+      - "lung_002"
+      - "lung_003"
+      - "lung_004"
+      volumeMounts:
+      - name: data-volume
+        mountPath: /mnt/data
