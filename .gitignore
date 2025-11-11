@@ -23,7 +23,14 @@ pretrained-models/
 # IDE
 .vscode/
 .idea/
+
+# Claude Kit & AI Coding Agents
 .claude/
+.opencode/
+plans/
+docs/
+CLAUDE.md
+.repomixignore
 
 # Output files
 *.pth

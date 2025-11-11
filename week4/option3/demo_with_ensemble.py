@@ -11,7 +11,7 @@ Khi nào dùng:
 - Ensemble nhiều perspectives
 
 Ưu điểm:
-- Accuracy cao nhất (96-97%)
+- Accuracy cao nhất trong 3 options
 - Kết hợp điểm mạnh của nhiều models
 - Giảm false positives/negatives
 - Flexible nhất
@@ -22,10 +22,13 @@ Nhược điểm:
 - Phức tạp hơn về implementation
 """
 
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 import torch
 import torch.nn as nn
 from pathlib import Path
-import numpy as np
 
 from monai.data import Dataset, DataLoader
 from monai.transforms import (
@@ -40,19 +43,21 @@ from monai.transforms import (
 from monai.inferers import SimpleInferer
 from monai.networks.nets import DenseNet121
 
+# ==============================================================================
+# PHASE 1: Setup and Data Loading
+# Option 3 - Ensemble: Multiple models combined for highest accuracy
+# ==============================================================================
+
 print("\n" + "="*70)
 print("OPTION 3: ENSEMBLE (TWO-STAGE PIPELINE)")
 print("="*70)
 
-# ============================================================================
-# Data Loading
-# ============================================================================
-
 def get_real_data():
     """Load real CT scans from Task06_Lung dataset"""
     possible_paths = [
-        Path("../hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
         Path("../../hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
+        Path("../hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
+        Path("hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
     ]
 
     data_dir = None
@@ -62,30 +67,25 @@ def get_real_data():
             break
 
     if data_dir is None:
-        print("[!] Data not found")
+        
         return None
 
     ct_files = sorted(list(data_dir.glob("lung_*.nii.gz")))[:3]
     ct_files = [f for f in ct_files if not f.name.startswith("._")]
 
-    np.random.seed(42)
-    labels = np.random.randint(0, 2, len(ct_files))
+    return [{"image": str(f), "case_id": f.stem}
+            for f in ct_files]
 
-    return [{"image": str(f), "label": int(l), "case_id": f.stem}
-            for f, l in zip(ct_files, labels)]
-
-print("\nLoading data...")
 data_dicts = get_real_data()
 
 if not data_dicts:
-    print("Skipping - no data")
     exit(0)
 
-print(f"[OK] Loaded {len(data_dicts)} CT scans")
+print(f"Loaded {len(data_dicts)} CT scans")
 
-# ============================================================================
-# MONAI Transforms
-# ============================================================================
+# ==============================================================================
+# PHASE 2: MONAI Transforms (same for all models)
+# ==============================================================================
 
 transforms = Compose([
     LoadImaged(keys=["image"]),
@@ -99,23 +99,22 @@ transforms = Compose([
 dataset = Dataset(data=data_dicts, transform=transforms)
 loader = DataLoader(dataset, batch_size=1, num_workers=0)
 
-# ============================================================================
-# Define Multiple Models
-# ============================================================================
+# ==============================================================================
+# PHASE 3: Define Multiple Models (KEY: 3 different models)
+# ==============================================================================
 
 print("\n" + "="*70)
 print("SETTING UP MODELS FOR ENSEMBLE")
 print("="*70)
 
 # Model 1: MONAI DenseNet121
-print("\n[1/3] Model 1: MONAI DenseNet121")
+print("\n[1/3] MONAI DenseNet121")
 model1 = DenseNet121(spatial_dims=3, in_channels=1, out_channels=2)
 model1.eval()
-print(f"   Parameters: {sum(p.numel() for p in model1.parameters()):,}")
-print(f"   Expected accuracy: 85%")
+print(f"   Params: {sum(p.numel() for p in model1.parameters()):,}")
 
-# Model 2: External Model A (Custom for medical)
-print("\n[2/3] Model 2: External Model A (Medical-specific)")
+# Model 2: External Model A
+print("\n[2/3] External Model A")
 
 class ExternalModelA(nn.Module):
     """External model từ research paper (simulated)"""
@@ -143,11 +142,10 @@ class ExternalModelA(nn.Module):
 
 model2 = ExternalModelA()
 model2.eval()
-print(f"   Parameters: {sum(p.numel() for p in model2.parameters()):,}")
-print(f"   Expected accuracy: 88%")
+print(f"   Params: {sum(p.numel() for p in model2.parameters()):,}")
 
-# Model 3: External Model B (Deeper architecture)
-print("\n[3/3] Model 3: External Model B (Deeper)")
+# Model 3: External Model B
+print("\n[3/3] External Model B")
 
 class ExternalModelB(nn.Module):
     """Another external model (simulated)"""
@@ -176,28 +174,21 @@ class ExternalModelB(nn.Module):
 
 model3 = ExternalModelB()
 model3.eval()
-print(f"   Parameters: {sum(p.numel() for p in model3.parameters()):,}")
-print(f"   Expected accuracy: 90%")
+print(f"   Params: {sum(p.numel() for p in model3.parameters()):,}")
 
-print("\n[OK] All 3 models loaded")
-
-# ============================================================================
-# Ensemble Strategy 1: Weighted Average
-# ============================================================================
+# ==============================================================================
+# PHASE 4: Ensemble Strategy 1 - Weighted Average
+# KEY: Combine predictions with weighted probabilities
+# ==============================================================================
 
 print("\n" + "="*70)
 print("STRATEGY 1: WEIGHTED AVERAGE ENSEMBLE")
 print("="*70)
 
-print("\nWeights: Model1=0.3, Model2=0.3, Model3=0.4 (best model gets highest weight)")
-
 inferer = SimpleInferer()
 ensemble_predictions_weighted = []
-
-print("\nRunning ensemble inference (weighted average)...")
 for i, batch in enumerate(loader):
     img = batch["image"]
-    label = batch["label"].item()
     case_id = batch["case_id"][0]
 
     with torch.no_grad():
@@ -211,10 +202,9 @@ for i, batch in enumerate(loader):
         prob2 = torch.softmax(output2, dim=1)
         prob3 = torch.softmax(output3, dim=1)
 
-        # Weighted average
+        # Weighted average (weights: 0.3, 0.3, 0.4)
         ensemble_prob = 0.3 * prob1 + 0.3 * prob2 + 0.4 * prob3
 
-        # Final prediction
         pred = torch.argmax(ensemble_prob, dim=1).item()
         conf = ensemble_prob.max().item()
 
@@ -224,24 +214,20 @@ for i, batch in enumerate(loader):
     print(f"      Model1: class={torch.argmax(prob1, dim=1).item()} (conf={prob1.max().item():.3f})")
     print(f"      Model2: class={torch.argmax(prob2, dim=1).item()} (conf={prob2.max().item():.3f})")
     print(f"      Model3: class={torch.argmax(prob3, dim=1).item()} (conf={prob3.max().item():.3f})")
-    print(f"      Ensemble: class={pred} (conf={conf:.3f}), Label={label}")
+    print(f"      Ensemble: class={pred} (conf={conf:.3f})")
 
-# ============================================================================
-# Ensemble Strategy 2: Voting
-# ============================================================================
+# ==============================================================================
+# PHASE 5: Ensemble Strategy 2 - Majority Voting
+# KEY: Each model votes, take majority
+# ==============================================================================
 
 print("\n" + "="*70)
 print("STRATEGY 2: MAJORITY VOTING ENSEMBLE")
 print("="*70)
 
-print("\nEach model votes, final prediction = majority vote")
-
 ensemble_predictions_voting = []
-
-print("\nRunning ensemble inference (voting)...")
 for i, batch in enumerate(loader):
     img = batch["image"]
-    label = batch["label"].item()
     case_id = batch["case_id"][0]
 
     with torch.no_grad():
@@ -268,36 +254,35 @@ for i, batch in enumerate(loader):
     print(f"      Model1 vote: {pred1}")
     print(f"      Model2 vote: {pred2}")
     print(f"      Model3 vote: {pred3}")
-    print(f"      Final: {pred} ({votes.count(pred)}/{len(votes)} votes), Label={label}")
+    print(f"      Final: {pred} ({votes.count(pred)}/{len(votes)} votes)")
 
-# ============================================================================
-# Comparison: Single vs Ensemble
-# ============================================================================
+# ==============================================================================
+# PHASE 6: Comparison - Single Model vs Ensemble
+# ==============================================================================
 
 print("\n" + "="*70)
 print("COMPARISON: SINGLE MODEL vs ENSEMBLE")
 print("="*70)
 
-# Get predictions from best single model (Model 3)
 single_predictions = []
-print("\nBest single model (Model3) predictions:")
 for i, batch in enumerate(loader):
     img = batch["image"]
-    label = batch["label"].item()
+    case_id = batch["case_id"][0]
 
     with torch.no_grad():
         output = inferer(inputs=img, network=model3)
         pred = torch.argmax(output, dim=1).item()
+        conf = torch.softmax(output, dim=1).max().item()
 
     single_predictions.append(pred)
-    print(f"   {i+1}. {batch['case_id'][0]}: Pred={pred}, Label={label}")
+    print(f"   {i+1}. {case_id}: Pred={pred} (confidence={conf:.3f})")
 
 print("\n" + "-"*70)
-print(f"\n{'Approach':<30} {'Predictions':<30} {'Expected Accuracy':<20}")
+print(f"\n{'Approach':<30} {'Predictions':<30} {'Type':<20}")
 print("-" * 80)
-print(f"{'Single Model (Model3)':<30} {str(single_predictions):<30} {'90%':<20}")
-print(f"{'Ensemble (Weighted Avg)':<30} {str(ensemble_predictions_weighted):<30} {'96%':<20}")
-print(f"{'Ensemble (Voting)':<30} {str(ensemble_predictions_voting):<30} {'95%':<20}")
+print(f"{'Single Model (Model3)':<30} {str(single_predictions):<30} {'Baseline':<20}")
+print(f"{'Ensemble (Weighted Avg)':<30} {str(ensemble_predictions_weighted):<30} {'Cải thiện tốt':<20}")
+print(f"{'Ensemble (Voting)':<30} {str(ensemble_predictions_voting):<30} {'Cải thiện tốt':<20}")
 
 # ============================================================================
 # Key Takeaways
@@ -317,7 +302,7 @@ Option 3 Ensemble cho ACCURACY CAO NHẤT:
    3. Feature Fusion: Combine features before classification (advanced)
 
 [OK] Ưu điểm:
-   1. Accuracy cao nhất: 95-97% (vs 85-90% single model)
+   1. Accuracy cao nhất trong 3 options
    2. Giảm false positives và false negatives
    3. Robust hơn - không phụ thuộc vào 1 model
    4. Linh hoạt - có thể thêm/bớt models dễ dàng
@@ -333,7 +318,7 @@ Performance:
 -----------
 - Single model: ~0.12s/sample
 - Ensemble (3 models): ~0.36s/sample (3x slower)
-- But: +6% accuracy improvement!
+- But: Accuracy cải thiện tốt!
 
 Khi nào dùng Option 3:
 ----------------------
@@ -353,10 +338,10 @@ Variants:
 Real-world Example:
 ------------------
 COVID-19 Detection:
-- Model 1: MONAI DenseNet (85% acc) - Good at general features
-- Model 2: Custom 3D CNN (88% acc) - Good at 3D patterns
-- Model 3: ResNet50 adapted (90% acc) - Good at fine details
-- Ensemble: 96% accuracy!
+- Model 1: MONAI DenseNet - Good at general features
+- Model 2: Custom 3D CNN - Good at 3D patterns
+- Model 3: ResNet50 adapted - Good at fine details
+- Ensemble: Accuracy cao nhất!
 
 Code changes:
 ------------
@@ -389,6 +374,6 @@ CHỈ THAY ĐỔI:
 """)
 
 print("="*70)
-print("[OK] DEMO COMPLETED - OPTION 3")
+
 print("="*70)
 print("\nNext: Try tuning ensemble weights or add more models!")

@@ -1,9 +1,5 @@
 """
-CÁCH 1: Chỉ dùng MONAI models (Baseline)
-=========================================
-
-Scenario: Bạn chỉ dùng models có sẵn trong MONAI
-Problem: Accuracy thấp (82-85%), không đủ cho production
+MONAI Baseline - DenseNet121 (untrained)
 """
 
 import sys
@@ -11,12 +7,7 @@ import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 import torch
-import numpy as np
 from pathlib import Path
-
-# ============================================================================
-# MONAI ONLY - Chỉ import từ MONAI
-# ============================================================================
 from monai.networks.nets import DenseNet121
 from monai.data import DataLoader, Dataset
 from monai.transforms import (
@@ -26,30 +17,22 @@ from monai.transforms import (
 )
 from monai.inferers import SimpleInferer
 
+# ============================================================================
+# PHASE 1: Setup and Data Loading
+# ============================================================================
+
 print("\n" + "="*70)
-print("CÁCH 1: MONAI ONLY (Baseline)")
+print("MONAI BASELINE (DenseNet121 - Untrained)")
 print("="*70)
-print("""
-Đặc điểm:
----------
-[OK] Chỉ dùng models có sẵn trong MONAI
-[OK] Không cần code phức tạp
-[X] Bị giới hạn bởi MONAI model zoo
-[X] Accuracy thấp (82-85%)
-[X] Không tận dụng pretrained ImageNet weights
-""")
 
 device = torch.device("cpu")
-
-# ============================================================================
-# Load Data
-# ============================================================================
 
 def get_real_data():
     """Load REAL CT scans"""
     possible_paths = [
-        Path("hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
+        Path("../../hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
         Path("../hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
+        Path("hospital-mlops/demo/sample-data/Task06_Lung/imagesTr"),
     ]
 
     data_dir = None
@@ -59,32 +42,24 @@ def get_real_data():
             break
 
     if data_dir is None:
-        print("[!]  Data not found, using dummy example")
         return None
 
-    ct_files = sorted(list(data_dir.glob("lung_*.nii.gz")))[:3]  # First 3
+    ct_files = sorted(list(data_dir.glob("lung_*.nii.gz")))[:3]
     ct_files = [f for f in ct_files if not f.name.startswith("._")]
 
-    np.random.seed(42)
-    labels = np.random.randint(0, 2, len(ct_files))
+    return [{"image": str(f), "case_id": f.stem}
+            for f in ct_files]
 
-    return [{"image": str(f), "label": int(l), "case_id": f.stem}
-            for f, l in zip(ct_files, labels)]
-
-print("\nLoading data...")
 data_dicts = get_real_data()
 
 if not data_dicts:
-    print("Skipping inference (no data)")
     exit(0)
 
-print(f"[OK] Loaded {len(data_dicts)} CT scans")
+print(f"Loaded {len(data_dicts)} CT scans")
 
 # ============================================================================
-# MONAI Transforms
+# PHASE 2: MONAI Transforms (Medical image preprocessing)
 # ============================================================================
-
-print("\nSetting up MONAI transforms...")
 
 transforms = Compose([
     LoadImaged(keys=["image"]),
@@ -100,40 +75,25 @@ transforms = Compose([
         clip=True
     ),
     ResizeWithPadOrCropd(keys=["image"], spatial_size=(96, 96, 64)),
-    EnsureTyped(keys=["image", "label"]),
+    EnsureTyped(keys=["image"]),
 ])
 
-print("[OK] Transforms ready")
-
 # ============================================================================
-# Model: MONAI DenseNet121
+# PHASE 3: Model Setup - MONAI DenseNet121 (untrained baseline)
 # ============================================================================
 
-print("\nCreating MONAI model...")
-print("-" * 70)
-
-# [X] BỊ GIỚI HẠN: Chỉ có thể chọn từ MONAI model zoo
-model = DenseNet121(
-    spatial_dims=3,
-    in_channels=1,
-    out_channels=2
-)
+model = DenseNet121(spatial_dims=3, in_channels=1, out_channels=2)
 model.to(device)
 model.eval()
 
 params = sum(p.numel() for p in model.parameters())
-print(f"Model: MONAI DenseNet121")
+print(f"\nModel: MONAI DenseNet121")
 print(f"Parameters: {params:,}")
-print(f"Source: monai.networks.nets")
-print(f"Pretrained weights: [X] No (random init)")
-print(f"Expected accuracy: 82-85% (LOW)")
+print(f"Pretrained: No (random init)")
 
 # ============================================================================
-# Inference
+# PHASE 4: Inference with MONAI SimpleInferer
 # ============================================================================
-
-print("\nRunning inference...")
-print("-" * 70)
 
 dataset = Dataset(data=data_dicts, transform=transforms)
 loader = DataLoader(dataset, batch_size=1, num_workers=0)
@@ -141,53 +101,24 @@ loader = DataLoader(dataset, batch_size=1, num_workers=0)
 inferer = SimpleInferer()
 
 all_preds = []
-all_labels = []
+all_confs = []
 
 with torch.no_grad():
     for i, batch in enumerate(loader):
         img = batch["image"].to(device)
-        label = batch["label"].item()
         case_id = batch["case_id"][0]
 
-        # Inference với MONAI inferer
         output = inferer(inputs=img, network=model)
         pred = torch.argmax(output, dim=1).item()
         conf = torch.softmax(output, dim=1).max().item()
 
         all_preds.append(pred)
-        all_labels.append(label)
+        all_confs.append(conf)
 
-        print(f"   {i+1}. {case_id}: Pred={pred} (conf={conf:.3f}), Label={label}")
+        print(f"  {i+1}. {case_id}: Pred={pred} (conf={conf:.3f})")
 
-# ============================================================================
-# Results
-# ============================================================================
+avg_confidence = sum(all_confs) / len(all_confs)
 
 print("\n" + "="*70)
-print("KẾT QUẢ - CÁCH 1: MONAI ONLY")
-print("="*70)
-
-accuracy = sum([p == l for p, l in zip(all_preds, all_labels)]) / len(all_labels)
-
-print(f"""
-Model:           MONAI DenseNet121
-Parameters:      {params:,}
-Pretrained:      [X] No
-Accuracy:        {accuracy*100:.1f}% (simulated labels, not meaningful)
-Expected (real): 82-85%
-
-[X] LIMITATIONS:
----------------
-1. Bị giới hạn bởi MONAI model zoo
-2. Không tận dụng pretrained ImageNet weights
-3. Accuracy thấp (82-85%)
-4. Model nhỏ, thiếu capacity
-5. Không thể dùng models từ torchvision, Hugging Face, research papers
-
-💡 Solution: Xem CÁCH 2 (compare_2_monai_plus_external.py)
-→ Thêm external model để tăng accuracy lên 94%!
-""")
-
-print("="*70)
-print("[OK] DEMO COMPLETED - CÁCH 1")
+print(f"RESULTS - Avg Confidence: {avg_confidence:.3f} (random, untrained)")
 print("="*70)
