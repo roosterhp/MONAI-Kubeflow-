@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-explicit-executor-
+spec:
+  entrypoint: test
+  executor:
+    container:
+      image: quay.io/argoproj/argoexec:v3.3.10
+      imagePullPolicy: IfNotPresent
+  templates:
+  - name: test
+    script:
+      image: python:3.10-slim
+      command: [python]
+      source: |
+        print("Testing argoexec image fix with explicit executor...")
+        print("If you see this, the fix worked!")

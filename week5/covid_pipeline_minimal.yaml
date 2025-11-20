@@ -1,0 +1,205 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: covid-minimal-
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+    - name: input_dir
+      value: /tmp/covid_input
+    - name: output_dir
+      value: /tmp/covid_output
+
+  templates:
+  - name: main
+    steps:
+    # Patient 1
+    - - name: load-1
+        template: load
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+    - - name: segment-1
+        template: segment
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+          - name: load_result
+            value: "{{steps.load-1.outputs.result}}"
+    - - name: detect-1
+        template: detect
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+          - name: segment_result
+            value: "{{steps.segment-1.outputs.result}}"
+    - - name: viz-1
+        template: viz
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+          - name: detect_result
+            value: "{{steps.detect-1.outputs.result}}"
+
+    # Patient 2
+    - - name: load-2
+        template: load
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+    - - name: segment-2
+        template: segment
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+          - name: load_result
+            value: "{{steps.load-2.outputs.result}}"
+    - - name: detect-2
+        template: detect
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+          - name: segment_result
+            value: "{{steps.segment-2.outputs.result}}"
+    - - name: viz-2
+        template: viz
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+          - name: detect_result
+            value: "{{steps.detect-2.outputs.result}}"
+
+  # Components
+  - name: load
+    inputs:
+      parameters:
+      - name: patient_id
+    container:
+      image: python:3.10-slim
+      command: [python, -c]
+      args:
+      - |
+        import json
+        patient_id = "{{inputs.parameters.patient_id}}"
+        result = {
+            "patient_id": patient_id,
+            "component": "load_data",
+            "status": "completed",
+            "message": f"Loaded {patient_id}"
+        }
+        print(json.dumps(result))
+    outputs:
+      parameters:
+      - name: result
+        valueFrom:
+          path: /tmp/result.json
+
+  - name: segment
+    inputs:
+      parameters:
+      - name: patient_id
+      - name: load_result
+    container:
+      image: python:3.10-slim
+      command: [python, -c]
+      args:
+      - |
+        import json
+        import random
+        patient_id = "{{inputs.parameters.patient_id}}"
+        load_result = '''{{inputs.parameters.load_result}}'''
+
+        random.seed(hash(patient_id) % 1000)
+        volume = random.randint(7000000, 9000000)
+
+        result = {
+            "patient_id": patient_id,
+            "component": "segment",
+            "lung_volume": volume,
+            "status": "completed",
+            "message": f"Segmented {patient_id}"
+        }
+        print(json.dumps(result))
+
+  - name: detect
+    inputs:
+      parameters:
+      - name: patient_id
+      - name: segment_result
+    container:
+      image: python:3.10-slim
+      command: [python, -c]
+      args:
+      - |
+        import json
+        import random
+        patient_id = "{{inputs.parameters.patient_id}}"
+        segment_result = '''{{inputs.parameters.segment_result}}'''
+
+        random.seed(hash(patient_id) % 100)
+        prob = random.randint(20, 95)
+        likelihood = "HIGH" if prob > 75 else "MODERATE" if prob > 50 else "LOW"
+
+        result = {
+            "patient_id": patient_id,
+            "component": "detect",
+            "likelihood": likelihood,
+            "probability": prob,
+            "status": "completed",
+            "message": f"Detected {patient_id}: {likelihood} ({prob}%)"
+        }
+        print(json.dumps(result))
+
+  - name: viz
+    inputs:
+      parameters:
+      - name: patient_id
+      - name: detect_result
+    container:
+      image: python:3.10-slim
+      command: [sh, -c]
+      args:
+      - |
+        echo "Installing matplotlib..."
+        pip install --quiet matplotlib
+        python -c '
+        import json
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+
+        patient_id = "{{inputs.parameters.patient_id}}"
+        detect_result = """{{inputs.parameters.detect_result}}"""
+
+        data = json.loads(detect_result)
+        likelihood = data.get("likelihood", "UNKNOWN")
+        prob = data.get("probability", 0)
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.text(0.5, 0.6, f"Patient: {patient_id}", ha="center", fontsize=14, fontweight="bold")
+        ax.text(0.5, 0.4, f"COVID Risk: {likelihood}", ha="center", fontsize=12)
+        ax.text(0.5, 0.2, f"Probability: {prob}%", ha="center", fontsize=12)
+        ax.axis("off")
+
+        Path("/tmp/output").mkdir(exist_ok=True)
+        plt.savefig(f"/tmp/output/{patient_id}.png", dpi=100, bbox_inches="tight")
+        plt.close()
+
+        result = {
+            "patient_id": patient_id,
+            "component": "viz",
+            "viz_file": f"/tmp/output/{patient_id}.png",
+            "status": "completed"
+        }
+        print(json.dumps(result))
+        '

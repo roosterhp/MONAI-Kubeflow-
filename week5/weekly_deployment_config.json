@@ -1,0 +1,58 @@
+{
+  "weekly_pipeline_config": {
+    "name": "weekly-covid-detection",
+    "description": "Weekly COVID-19 detection pipeline for hospital",
+    "input": {
+      "weekly_dir": "/mnt/data/weekly_input",
+      "supported_formats": [
+        "*.nii.gz"
+      ],
+      "auto_discover": true
+    },
+    "output": {
+      "base_dir": "/mnt/data/hospital_output",
+      "patient_structure": "PATIENT_ID/",
+      "files": [
+        "covid_visualization.png",
+        "covid_results.json",
+        "features.json"
+      ]
+    },
+    "processing": {
+      "max_concurrent_patients": 10,
+      "timeout_per_patient": "15 minutes",
+      "parallel_processing": true
+    },
+    "resources": {
+      "cpu_limit": "2",
+      "memory_limit": "4Gi",
+      "storage": "20Gi"
+    }
+  },
+  "docker": {
+    "image": "covid-weekly-pipeline:latest",
+    "dockerfile": "Dockerfile.weekly"
+  },
+  "kubeflow": {
+    "namespace": "kubeflow",
+    "pipeline_name": "weekly-covid-detection",
+    "experiment": "weekly-covid-scan"
+  },
+  "volume_mounts": {
+    "input_volume": {
+      "name": "weekly-input-pv",
+      "mount_path": "/mnt/data/weekly_input",
+      "size": "10Gi"
+    },
+    "output_volume": {
+      "name": "hospital-output-pv",
+      "mount_path": "/mnt/data/hospital_output",
+      "size": "20Gi"
+    },
+    "working_volume": {
+      "name": "working-pv",
+      "mount_path": "/mnt/data/working",
+      "size": "15Gi"
+    }
+  }
+}

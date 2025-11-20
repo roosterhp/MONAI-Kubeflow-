@@ -1,0 +1,109 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+tmp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data files (should be mounted as volumes)
+data/
+*.nii
+*.nii.gz
+*.dcm
+*.png
+*.jpg
+*.jpeg
+
+# Model files
+models/
+*.pth
+*.pkl
+*.h5
+
+# Cache directories
+cache/
+.cache/
+
+# Build artifacts
+build/
+target/
+
+# Scripts (not needed in container)
+scripts/
+*.sh
+*.ps1
+
+# Legacy files
+legacy/
+
+# Output directories
+output/
+results/
+temp/

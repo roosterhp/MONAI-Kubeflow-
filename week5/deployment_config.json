@@ -1,0 +1,50 @@
+{
+  "pipeline_name": "covid-19-detection-week5",
+  "description": "Week5 COVID-19 Detection Pipeline with clean implementation",
+  "components": [
+    {
+      "name": "lung_segmentation",
+      "image": "covid-pipeline-week5:latest",
+      "command": [
+        "python",
+        "/app/components/lung_segment.py"
+      ],
+      "args": [
+        "{{inputs.input_file}}",
+        "{{inputs.output_dir}}"
+      ]
+    },
+    {
+      "name": "covid_detection",
+      "image": "covid-pipeline-week5:latest",
+      "command": [
+        "python",
+        "/app/components/covid_detect.py"
+      ],
+      "args": [
+        "{{inputs.input_dir}}",
+        "{{inputs.output_dir}}"
+      ]
+    },
+    {
+      "name": "visualization",
+      "image": "covid-pipeline-week5:latest",
+      "command": [
+        "python",
+        "/app/components/visualize.py"
+      ],
+      "args": [
+        "{{inputs.input_dir}}",
+        "{{inputs.output_dir}}"
+      ]
+    }
+  ],
+  "patients": [
+    "lung_001",
+    "lung_002",
+    "lung_003",
+    "lung_004"
+  ],
+  "input_path": "/mnt/data/covid_inputs/week_current",
+  "output_path": "/mnt/data/covid_outputs/week_current"
+}
