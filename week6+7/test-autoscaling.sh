@@ -39,8 +39,10 @@ kubectl run load-generator \
 
     timeout 300 /bin/sh -c 'while true; do
       # Launch 20 parallel requests
-      for i in {1..20}; do
+      i=1
+      while [ \$i -le 20 ]; do
         wget -q -O- http://$SERVICE_IP:$SERVICE_PORT/ > /dev/null 2>&1 &
+        i=\$((i + 1))
       done
 
       # Very short sleep to maintain high load
