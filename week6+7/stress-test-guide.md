@@ -87,7 +87,7 @@ Trong Terminal 2:
 **Script sẽ:**
 1. Tìm ml-pipeline service endpoint
 2. Tạo pod `load-generator`
-3. Gửi nhiều requests liên tục trong 2 phút
+3. Gửi 20 concurrent requests mỗi 0.01s trong 5 phút (HEAVY LOAD!)
 4. Tự động cleanup sau khi xong
 
 ### Bước 4: Theo dõi autoscaling
@@ -99,21 +99,23 @@ Trong Terminal 1, bạn sẽ thấy:
 HPA: 15%/80% → 2 pods
 ```
 
-**Phase 2: Load Increase (30-60s)**
+**Phase 2: Load Increase (30-90s)**
 ```
 HPA: 85%/80% → 3 pods (scaling up!)
-HPA: 90%/80% → 4 pods
+HPA: 95%/80% → 5 pods (scaling up more!)
+HPA: 90%/80% → 7 pods (heavy load!)
 ```
 
-**Phase 3: Load Stable (60-120s)**
+**Phase 3: Load Stable (90-300s)**
 ```
-HPA: 70%/80% → 4 pods (stable)
+HPA: 75%/80% → 7 pods (stable under heavy load)
 ```
 
-**Phase 4: Load Decrease (120-180s)**
+**Phase 4: Load Decrease (300-600s)**
 ```
-HPA: 40%/80% → 4 pods (waiting cooldown)
-HPA: 30%/80% → 3 pods (scaling down)
+HPA: 40%/80% → 7 pods (waiting cooldown)
+HPA: 35%/80% → 5 pods (scaling down)
+HPA: 25%/80% → 3 pods (scaling down more)
 HPA: 20%/80% → 2 pods (back to min)
 ```
 
@@ -239,25 +241,29 @@ watch -n 2 "kubectl top pods -n kubeflow | grep ml-pipeline"
 |------|-----------|------|--------|
 | 0s | 15% | 2 | Initial state |
 | 30s | 85% | 3 | Scaling up |
-| 60s | 90% | 4 | Scaling up |
-| 90s | 70% | 4 | Stable under load |
-| 120s | 40% | 4 | Load test ended |
-| 420s | 30% | 3 | Cooldown + scale down |
-| 720s | 20% | 2 | Back to minimum |
+| 60s | 95% | 5 | Scaling up more |
+| 90s | 90% | 7 | Heavy load - max scale |
+| 180s | 75% | 7 | Stable under heavy load |
+| 300s | 40% | 7 | Load test ended |
+| 600s | 35% | 5 | Cooldown + scale down |
+| 900s | 25% | 3 | Scaling down more |
+| 1200s | 20% | 2 | Back to minimum |
 
-**Note:** Scale down có cooldown period (default 5 phút), nên cần đợi lâu hơn mới thấy pods giảm.
+**Note:** Scale down có cooldown period (default 5 phút), nên cần đợi lâu hơn mới thấy pods giảm. Do load mạnh hơn, pods có thể scale lên 7-10 pods tùy cluster resources.
 
 ---
 
 ## Tips
 
-1. **Tăng load mạnh hơn:**
+1. **Giảm load (nếu quá mạnh):**
    - Edit `test-autoscaling.sh`
-   - Giảm `sleep 0.1` thành `sleep 0.01`
-   - Hoặc tăng số lượng requests
+   - Tăng `sleep 0.01` thành `sleep 0.05`
+   - Hoặc giảm số requests từ 20 xuống 10
 
-2. **Test lâu hơn:**
-   - Thay `timeout 120` thành `timeout 300` (5 phút)
+2. **Tăng load (nếu chưa đủ):**
+   - Giảm `sleep 0.01` thành `sleep 0.005`
+   - Tăng số requests từ 20 lên 30-50
+   - Tăng duration từ 300s lên 600s
 
 3. **Monitor nhiều metrics:**
    - Thêm memory monitoring
@@ -269,3 +275,4 @@ watch -n 2 "kubectl top pods -n kubeflow | grep ml-pipeline"
    - Increase MINPODS for critical services
    - Set proper resource limits
    - Monitor cost vs performance
+   - Test during low traffic hours
