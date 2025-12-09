@@ -32,7 +32,7 @@ echo "Using service: $SERVICE_NAME"
 
 echo "Target: http://$SERVICE_IP:$SERVICE_PORT"
 echo "Duration: 5 minutes (300 seconds)"
-echo "Load: HIGH (20 concurrent requests per second = 6,000 total requests)"
+echo "Load: EXTREME (200 concurrent requests per second = 60,000 total requests)"
 echo ""
 echo "Starting in 3 seconds..."
 sleep 3
@@ -55,14 +55,14 @@ kubectl run load-generator \
 
     # Run for 300 seconds
     while [ \$(date +%s) -lt \$end_time ]; do
-      # Launch 20 parallel requests
+      # Launch 200 parallel requests (10x more stress)
       i=1
-      while [ \$i -le 20 ]; do
+      while [ \$i -le 200 ]; do
         wget -q -O- http://$SERVICE_IP:$SERVICE_PORT/ > /dev/null 2>&1 &
         i=\$((i + 1))
       done
 
-      request_count=\$((request_count + 20))
+      request_count=\$((request_count + 200))
 
       # Progress update every 30 seconds
       current_time=\$(date +%s)
@@ -75,7 +75,7 @@ kubectl run load-generator \
 
       # Busybox sleep only supports integer seconds
       # Sleep 1 second between batches to avoid overwhelming the pod
-      # This gives us 20 requests/second = 6,000 requests over 5 minutes
+      # This gives us 200 requests/second = 60,000 requests over 5 minutes
       sleep 1
     done
 
