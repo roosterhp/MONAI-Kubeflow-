@@ -8,13 +8,27 @@ echo "WARNING: Starting HEAVY load test on ml-pipeline service..."
 echo ""
 
 # Get the ml-pipeline service endpoint
-SERVICE_IP=$(kubectl get svc ml-pipeline-ui -n kubeflow -o jsonpath='{.spec.clusterIP}')
-SERVICE_PORT=$(kubectl get svc ml-pipeline-ui -n kubeflow -o jsonpath='{.spec.ports[0].port}')
+# Try ml-pipeline-ui first, fallback to ml-pipeline
+SERVICE_NAME="ml-pipeline-ui"
+SERVICE_IP=$(kubectl get svc $SERVICE_NAME -n kubeflow -o jsonpath='{.spec.clusterIP}' 2>/dev/null)
 
 if [ -z "$SERVICE_IP" ]; then
-    echo "ERROR: Cannot find ml-pipeline-ui service"
+    echo "WARNING: ml-pipeline-ui not found, trying ml-pipeline..."
+    SERVICE_NAME="ml-pipeline"
+    SERVICE_IP=$(kubectl get svc $SERVICE_NAME -n kubeflow -o jsonpath='{.spec.clusterIP}' 2>/dev/null)
+fi
+
+if [ -z "$SERVICE_IP" ]; then
+    echo "ERROR: Cannot find ml-pipeline-ui or ml-pipeline service"
+    echo ""
+    echo "Available services:"
+    kubectl get svc -n kubeflow
     exit 1
 fi
+
+SERVICE_PORT=$(kubectl get svc $SERVICE_NAME -n kubeflow -o jsonpath='{.spec.ports[0].port}')
+
+echo "Using service: $SERVICE_NAME"
 
 echo "Target: http://$SERVICE_IP:$SERVICE_PORT"
 echo "Duration: 5 minutes (300 seconds)"
