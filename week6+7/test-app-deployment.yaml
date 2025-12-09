@@ -1,0 +1,210 @@
+---
+# Test Application Deployment with MySQL Connection Pool
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-test-app
+  namespace: kubeflow
+  labels:
+    app: mysql-test-app
+spec:
+  replicas: 5  # Start with 5 pods to test concurrent connections
+  selector:
+    matchLabels:
+      app: mysql-test-app
+  template:
+    metadata:
+      labels:
+        app: mysql-test-app
+    spec:
+      containers:
+      - name: app
+        image: python:3.9-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          pip install pymysql sqlalchemy > /dev/null 2>&1
+          python /app/test-db.py
+        env:
+        # Database connection settings
+        - name: DB_HOST
+          value: "mysql-statefulset-service.kubeflow.svc.cluster.local"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: database
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+
+        # Connection pool settings
+        - name: DB_POOL_SIZE
+          value: "10"  # Base connections per pod
+        - name: DB_MAX_OVERFLOW
+          value: "5"   # Extra connections when needed
+        - name: DB_POOL_TIMEOUT
+          value: "30"
+        - name: DB_POOL_RECYCLE
+          value: "3600"
+
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+
+      volumes:
+      - name: app-code
+        configMap:
+          name: mysql-test-app-code
+
+---
+# ConfigMap with test application code
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-test-app-code
+  namespace: kubeflow
+data:
+  test-db.py: |
+    #!/usr/bin/env python3
+    import os
+    import time
+    import sys
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.pool import QueuePool
+
+    # Get environment variables
+    DB_HOST = os.getenv('DB_HOST')
+    DB_PORT = os.getenv('DB_PORT', '3306')
+    DB_NAME = os.getenv('DB_NAME')
+    DB_USER = os.getenv('DB_USER')
+    DB_PASSWORD = os.getenv('DB_PASSWORD')
+
+    POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '10'))
+    MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '5'))
+    POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))
+    POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '3600'))
+
+    print(f"=== MySQL Connection Pool Test ===")
+    print(f"Host: {DB_HOST}:{DB_PORT}")
+    print(f"Database: {DB_NAME}")
+    print(f"Pool Size: {POOL_SIZE}")
+    print(f"Max Overflow: {MAX_OVERFLOW}")
+    print(f"Pod: {os.getenv('HOSTNAME', 'unknown')}")
+    print("")
+
+    # Create database URL
+    db_url = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+    # Create engine with connection pooling
+    try:
+        engine = create_engine(
+            db_url,
+            poolclass=QueuePool,
+            pool_size=POOL_SIZE,
+            max_overflow=MAX_OVERFLOW,
+            pool_timeout=POOL_TIMEOUT,
+            pool_recycle=POOL_RECYCLE,
+            pool_pre_ping=True,
+            echo_pool=False
+        )
+
+        print("Waiting for MySQL to be ready...")
+        max_retries = 30
+        for i in range(max_retries):
+            try:
+                with engine.connect() as conn:
+                    result = conn.execute(text("SELECT 1"))
+                    print(f"Connected to MySQL successfully!")
+                    break
+            except Exception as e:
+                if i < max_retries - 1:
+                    print(f"Retry {i+1}/{max_retries}: {e}")
+                    time.sleep(2)
+                else:
+                    print(f"Failed to connect after {max_retries} retries")
+                    sys.exit(1)
+
+        # Create test table
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS connection_test (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    pod_name VARCHAR(255),
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    message TEXT
+                )
+            """))
+            conn.commit()
+            print("Test table created")
+
+        # Continuous test loop
+        print("\nStarting continuous connection test...")
+        print("Press Ctrl+C to stop\n")
+
+        counter = 0
+        while True:
+            try:
+                with engine.connect() as conn:
+                    # Insert test data
+                    result = conn.execute(
+                        text("""
+                            INSERT INTO connection_test (pod_name, message)
+                            VALUES (:pod, :msg)
+                        """),
+                        {"pod": os.getenv('HOSTNAME', 'unknown'), "msg": f"Test message {counter}"}
+                    )
+                    conn.commit()
+
+                    # Query connection stats
+                    result = conn.execute(text("""
+                        SELECT
+                            COUNT(*) as total_rows,
+                            COUNT(DISTINCT pod_name) as unique_pods
+                        FROM connection_test
+                    """))
+                    row = result.fetchone()
+
+                    # Show pool stats every 10 iterations
+                    if counter % 10 == 0:
+                        pool = engine.pool
+                        print(f"[{time.strftime('%H:%M:%S')}] "
+                              f"Requests: {counter} | "
+                              f"Pool: {pool.size()}/{POOL_SIZE} | "
+                              f"Overflow: {pool.overflow()} | "
+                              f"DB Rows: {row[0]} | "
+                              f"Unique Pods: {row[1]}")
+
+                    counter += 1
+                    time.sleep(1)
+
+            except KeyboardInterrupt:
+                print("\nStopping test...")
+                break
+            except Exception as e:
+                print(f"Error: {e}")
+                time.sleep(5)
+
+        print("\nTest completed!")
+
+    except Exception as e:
+        print(f"Failed to create engine: {e}")
+        sys.exit(1)
