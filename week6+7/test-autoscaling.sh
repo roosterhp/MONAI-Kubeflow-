@@ -32,7 +32,7 @@ echo "Using service: $SERVICE_NAME"
 
 echo "Target: http://$SERVICE_IP:$SERVICE_PORT"
 echo "Duration: 5 minutes (300 seconds)"
-echo "Load: HIGH (20 concurrent requests every 0.01s)"
+echo "Load: HIGH (20 concurrent requests per second = 6,000 total requests)"
 echo ""
 echo "Starting in 3 seconds..."
 sleep 3
@@ -74,11 +74,13 @@ kubectl run load-generator \
         last_progress_time=\$current_time
       fi
 
-      # Very short sleep to maintain high load
-      sleep 0.001
+      # Busybox sleep only supports integer seconds
+      # Sleep 1 second between batches to avoid overwhelming the pod
+      # This gives us 20 requests/second = 6,000 requests over 5 minutes
+      sleep 1
     done
 
-    actual_duration=\$(($(date +%s) - start_time))
+    actual_duration=\$((end_time - start_time))
 
     echo ''
     echo 'Load test completed!'
