@@ -38,11 +38,10 @@ echo "Starting in 3 seconds..."
 sleep 3
 
 # Create a temporary pod to generate HEAVY load
+# Create the pod (without -i flag to avoid early termination)
 kubectl run load-generator \
   --image=busybox:1.35 \
   --restart=Never \
-  --rm \
-  -i \
   -n kubeflow \
   --command -- /bin/sh -c "
     echo 'Generating HEAVY load for 5 minutes...'
@@ -86,7 +85,20 @@ kubectl run load-generator \
     echo 'Load test completed!'
     echo \"Duration: \${actual_duration} seconds\"
     echo \"Total requests: \${request_count}\"
-  " 2>/dev/null
+  "
+
+echo ""
+echo "Waiting for load test to complete (this will take 5 minutes)..."
+echo "Monitoring progress..."
+echo ""
+
+# Wait for pod to complete and show logs in real-time
+kubectl wait --for=condition=Ready pod/load-generator -n kubeflow --timeout=10s 2>/dev/null
+kubectl logs -f load-generator -n kubeflow 2>/dev/null || true
+
+echo ""
+echo "Cleaning up..."
+kubectl delete pod load-generator -n kubeflow --ignore-not-found=true 2>/dev/null
 
 echo ""
 echo "Load test completed!"
