@@ -48,10 +48,14 @@ kubectl run load-generator \
     echo 'Generating HEAVY load for 5 minutes...'
     echo ''
 
+    echo 'Starting load generation...'
     start_time=\$(date +%s)
+    end_time=\$((start_time + 300))
     request_count=0
+    last_progress_time=\$start_time
 
-    timeout 300 /bin/sh -c 'while true; do
+    # Run for 300 seconds
+    while [ \$(date +%s) -lt \$end_time ]; do
       # Launch 20 parallel requests
       i=1
       while [ \$i -le 20 ]; do
@@ -59,16 +63,27 @@ kubectl run load-generator \
         i=\$((i + 1))
       done
 
-      # Very short sleep to maintain high load
-      sleep 0.01
-    done'
+      request_count=\$((request_count + 20))
 
-    end_time=\$(date +%s)
-    duration=\$((end_time - start_time))
+      # Progress update every 30 seconds
+      current_time=\$(date +%s)
+      time_diff=\$((current_time - last_progress_time))
+      if [ \$time_diff -ge 30 ]; then
+        elapsed=\$((current_time - start_time))
+        echo \"Progress: \${elapsed}s / 300s - \${request_count} requests sent\"
+        last_progress_time=\$current_time
+      fi
+
+      # Very short sleep to maintain high load
+      sleep 0.001
+    done
+
+    actual_duration=\$(($(date +%s) - start_time))
 
     echo ''
     echo 'Load test completed!'
-    echo \"Duration: \${duration} seconds\"
+    echo \"Duration: \${actual_duration} seconds\"
+    echo \"Total requests: \${request_count}\"
   " 2>/dev/null
 
 echo ""
