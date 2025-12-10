@@ -594,5 +594,3 @@ week6+7/
 2. Configure connection pooling trong app
 3. Load testing với nhiều pods
 4. Monitor và optimize
-
-Bạn muốn tôi tạo file config MySQL StatefulSet và test scripts không?
