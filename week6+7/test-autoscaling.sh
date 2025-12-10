@@ -34,6 +34,12 @@ echo "Target: http://$SERVICE_IP:$SERVICE_PORT"
 echo "Duration: 5 minutes (300 seconds)"
 echo "Load: INSANE (2000 concurrent requests per second = 600,000 total requests)"
 echo ""
+
+# Clean up any existing load-generator pod from previous runs
+echo "Cleaning up any existing load-generator pod..."
+kubectl delete pod load-generator -n kubeflow --ignore-not-found=true 2>/dev/null
+sleep 2
+
 echo "Starting in 3 seconds..."
 sleep 3
 
