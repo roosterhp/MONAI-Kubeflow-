@@ -594,3 +594,33 @@ week6+7/
 2. Configure connection pooling trong app
 3. Load testing với nhiều pods
 4. Monitor và optimize
+
+## Week 8 - Tóm tắt ngắn gọn:
+
+### 1. Deploy MySQL với StatefulSet
+- Dùng StatefulSet để MySQL có disk riêng, không mất data
+- Mỗi pod có tên cố định (mysql-0, mysql-1...)
+- Data lưu trong PersistentVolume
+
+### 2. Connection Pooling
+- Tạo sẵn nhiều kết nối MySQL, tái sử dụng
+- Thay vì: mở → query → đóng (chậm)
+- Làm: lấy từ pool → query → trả lại (nhanh)
+```go
+db.SetMaxOpenConns(25)    // Max 25 connections
+db.SetMaxIdleConns(10)    // Giữ 10 sẵn sàng
+```
+
+### 3. Resource Limits
+- Giới hạn CPU/RAM cho MySQL
+- Tránh "ăn hết" tài nguyên server
+```yaml
+requests: 1GB RAM, 0.5 CPU
+limits:   2GB RAM, 1 CPU
+```
+
+### 4. Load Testing
+- Test xem chịu được bao nhiêu users cùng lúc
+- Tìm điểm nghẽn (bottleneck)
+
+**Mục đích chung:** MySQL chạy ổn định, nhanh, không crash khi traffic cao.
