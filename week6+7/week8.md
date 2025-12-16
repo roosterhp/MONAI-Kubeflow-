@@ -34,11 +34,11 @@ Real-time monitoring HPA behavior, pod scaling, và database connections.
 | Component | Min Pods | Max Pods | CPU Target | Memory Target | Current Status |
 |-----------|----------|----------|------------|---------------|----------------|
 | **ml-pipeline** | 2 | 10 | 70% | 80% | ✓ 2 replicas, CPU 3%, Mem 7% |
-| **ml-pipeline-ui** | 1 | 5 | 75% | 80% | ⚠️ **5 replicas (MAX)**, CPU **218%**, Mem 51% |
+| **ml-pipeline-ui** | 1 | 5 | 75% | 80% |  **5 replicas (MAX)**, CPU **218%**, Mem 51% |
 | **workflow-controller** | 2 | 8 | 70% | 80% | ✓ 2 replicas, CPU 2%, Mem 5% |
 | **ml-pipeline-persistenceagent** | 2 | 4 | 75% | 80% | ✓ 2 replicas, CPU 2%, Mem 9% |
 | **ml-pipeline-scheduledworkflow** | 2 | 4 | 75% | 80% | ✓ 2 replicas, CPU 2%, Mem 8% |
-| **ml-pipeline-visualizationserver** | 1 | 3 | 75% | 80% | ⚠️ 1 replica, CPU 4%, Mem **71%** (near limit) |
+| **ml-pipeline-visualizationserver** | 1 | 3 | 75% | 80% |  1 replica, CPU 4%, Mem **71%** (near limit) |
 | **cache-server** | 1 | 3 | 75% | 80% | ✓ 1 replica, CPU 2%, Mem 4% |
 
 ### HPA Scaling Behaviors
