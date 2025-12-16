@@ -1,0 +1,73 @@
+==========================================
+MySQL Database Test
+==========================================
+
+[1/10] Pod Status...
+mysql-statefulset-0   1/1     Running   0          11h
+[PASS]
+
+[2/10] MySQL Connectivity...
+version
+8.0.44
+
+[3/10] Show Databases...
+Database
+information_schema
+kubeflow_db
+mysql
+performance_schema
+sys
+
+[4/10] Check User 'kubeflow'...
+User	Host
+kubeflow	%
+
+[5/10] Test User Login...
+ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'current_user' at line 1
+command terminated with exit code 1
+
+[6/10] CREATE Table...
+[DONE]
+
+[7/10] INSERT Data...
+[DONE]
+
+[8/10] SELECT Data...
+id	name
+1	updated
+3	test3
+4	test1
+5	test2
+6	test3
+
+[9/10] UPDATE Data...
+id	name
+1	updated
+
+[10/10] DELETE Data...
+remaining
+5
+
+==========================================
+Additional Information
+==========================================
+
+MySQL Configuration:
+@@max_connections	buffer_gb
+500	2.000000000000
+
+Active Connections:
+total_connections
+2
+
+Storage Usage:
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda2       126G   25G   95G  21% /var/lib/mysql
+
+Resource Usage:
+NAME                  CPU(cores)   MEMORY(bytes)   
+mysql-statefulset-0   15m          531Mi           
+
+==========================================
+Test Complete!
+==========================================
