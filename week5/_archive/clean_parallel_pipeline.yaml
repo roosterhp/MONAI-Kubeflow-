@@ -1,0 +1,1446 @@
+# PIPELINE DEFINITION
+# Name: clean-parallel-covid-pipeline
+# Description: Parallel COVID-19 Detection Pipeline - 4 Patients with Individual Component Separation (Clean Version)
+# Inputs:
+#    input_dir: str [Default: '/mnt/data/weekly_input']
+#    output_dir: str [Default: '/mnt/data/hospital_output']
+components:
+  comp-create-visualization-op:
+    executorLabel: exec-create-visualization-op
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-2:
+    executorLabel: exec-create-visualization-op-2
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-3:
+    executorLabel: exec-create-visualization-op-3
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-4:
+    executorLabel: exec-create-visualization-op-4
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op:
+    executorLabel: exec-detect-covid-op
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-2:
+    executorLabel: exec-detect-covid-op-2
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-3:
+    executorLabel: exec-detect-covid-op-3
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-4:
+    executorLabel: exec-detect-covid-op-4
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-generate-parallel-summary-op:
+    executorLabel: exec-generate-parallel-summary-op
+    inputDefinitions:
+      parameters:
+        output_dir:
+          parameterType: STRING
+        patient_1_viz:
+          parameterType: STRING
+        patient_2_viz:
+          parameterType: STRING
+        patient_3_viz:
+          parameterType: STRING
+        patient_4_viz:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op:
+    executorLabel: exec-load-patient-data-op
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op-2:
+    executorLabel: exec-load-patient-data-op-2
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op-3:
+    executorLabel: exec-load-patient-data-op-3
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op-4:
+    executorLabel: exec-load-patient-data-op-4
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op:
+    executorLabel: exec-segment-lungs-op
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-2:
+    executorLabel: exec-segment-lungs-op-2
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-3:
+    executorLabel: exec-segment-lungs-op-3
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-4:
+    executorLabel: exec-segment-lungs-op-4
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-create-visualization-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_visualization_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_visualization_op(\n    detection_result: str,\n    patient_id:\
+          \ str,\n    output_dir: str\n) -> str:\n    \"\"\"Visualization Component\
+          \ - Patient Specific\"\"\"\n    import json\n    import numpy as np\n  \
+          \  import matplotlib.pyplot as plt\n    from pathlib import Path\n\n   \
+          \ print(f\"[VISUALIZE] Processing: {patient_id}\")\n\n    # Parse detection\
+          \ results\n    results = json.loads(detection_result)\n    diagnosis = results['final_diagnosis']\n\
+          \n    # Create visualization showing pipeline stages\n    fig, axes = plt.subplots(2,\
+          \ 2, figsize=(12, 10))\n    fig.suptitle(f'COVID-19 Pipeline - {patient_id}',\
+          \ fontsize=16, fontweight='bold')\n\n    # Pipeline stages\n    stages =\
+          \ [\n        (\"Load Data\", \"Data\", \"green\", \"Completed\"),\n    \
+          \    (\"Lung Seg\", \"Segment\", \"blue\", \"Completed\"),\n        (\"\
+          COVID Detect\", \"Detect\", \"orange\", \"Completed\"),\n        (\"Visualization\"\
+          , \"Visual\", \"purple\", \"Completed\")\n    ]\n\n    for idx, (step, short,\
+          \ color, status) in enumerate(stages):\n        row, col = divmod(idx, 2)\n\
+          \        axes[row, col].text(0.5, 0.5, f'{step}\\n{status}',\n         \
+          \                 ha='center', va='center', transform=axes[row, col].transAxes,\n\
+          \                          fontsize=14, fontweight='bold', color=color)\n\
+          \        axes[row, col].set_title(f'Component {idx+1}')\n        axes[row,\
+          \ col].axis('off')\n\n    # COVID results\n    likelihood = diagnosis['likelihood']\n\
+          \    probability = diagnosis['probability']\n\n    colors_map = {\n    \
+          \    'HIGH': '#FF4444',    # Red\n        'MODERATE': '#FFA500', # Orange\n\
+          \        'LOW': '#4CAF50',     # Green\n        'VERY_LOW': '#4CAF50'  #\
+          \ Green\n    }\n    color = colors_map.get(likelihood, '#666666')\n\n  \
+          \  result_text = f'''COVID-19 Results - {patient_id}\n\nLikelihood: {likelihood}\n\
+          Probability: {probability}%\nRecommendation: {diagnosis['recommendation']}\n\
+          \nStatus: Pipeline Active'''\n\n    axes[1, 1].text(0.05, 0.5, result_text,\n\
+          \                   transform=axes[1, 1].transAxes, fontsize=10,\n     \
+          \              color=color, verticalalignment='center', wrap=True)\n   \
+          \ axes[1, 1].set_title('Diagnosis Results')\n    axes[1, 1].axis('off')\n\
+          \n    plt.tight_layout()\n\n    # Save visualization\n    output_path =\
+          \ Path(output_dir) / f\"{patient_id}_pipeline.png\"\n    output_path.parent.mkdir(parents=True,\
+          \ exist_ok=True)\n    plt.savefig(output_path, dpi=150, bbox_inches='tight')\n\
+          \    plt.close()\n\n    viz_results = {\n        \"component\": \"visualization\"\
+          ,\n        \"patient_id\": patient_id,\n        \"visualization_file\":\
+          \ str(output_path),\n        \"likelihood\": likelihood,\n        \"pipeline_stages\"\
+          : 4,\n        \"status\": \"completed\"\n    }\n\n    return json.dumps(viz_results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-create-visualization-op-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_visualization_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_visualization_op(\n    detection_result: str,\n    patient_id:\
+          \ str,\n    output_dir: str\n) -> str:\n    \"\"\"Visualization Component\
+          \ - Patient Specific\"\"\"\n    import json\n    import numpy as np\n  \
+          \  import matplotlib.pyplot as plt\n    from pathlib import Path\n\n   \
+          \ print(f\"[VISUALIZE] Processing: {patient_id}\")\n\n    # Parse detection\
+          \ results\n    results = json.loads(detection_result)\n    diagnosis = results['final_diagnosis']\n\
+          \n    # Create visualization showing pipeline stages\n    fig, axes = plt.subplots(2,\
+          \ 2, figsize=(12, 10))\n    fig.suptitle(f'COVID-19 Pipeline - {patient_id}',\
+          \ fontsize=16, fontweight='bold')\n\n    # Pipeline stages\n    stages =\
+          \ [\n        (\"Load Data\", \"Data\", \"green\", \"Completed\"),\n    \
+          \    (\"Lung Seg\", \"Segment\", \"blue\", \"Completed\"),\n        (\"\
+          COVID Detect\", \"Detect\", \"orange\", \"Completed\"),\n        (\"Visualization\"\
+          , \"Visual\", \"purple\", \"Completed\")\n    ]\n\n    for idx, (step, short,\
+          \ color, status) in enumerate(stages):\n        row, col = divmod(idx, 2)\n\
+          \        axes[row, col].text(0.5, 0.5, f'{step}\\n{status}',\n         \
+          \                 ha='center', va='center', transform=axes[row, col].transAxes,\n\
+          \                          fontsize=14, fontweight='bold', color=color)\n\
+          \        axes[row, col].set_title(f'Component {idx+1}')\n        axes[row,\
+          \ col].axis('off')\n\n    # COVID results\n    likelihood = diagnosis['likelihood']\n\
+          \    probability = diagnosis['probability']\n\n    colors_map = {\n    \
+          \    'HIGH': '#FF4444',    # Red\n        'MODERATE': '#FFA500', # Orange\n\
+          \        'LOW': '#4CAF50',     # Green\n        'VERY_LOW': '#4CAF50'  #\
+          \ Green\n    }\n    color = colors_map.get(likelihood, '#666666')\n\n  \
+          \  result_text = f'''COVID-19 Results - {patient_id}\n\nLikelihood: {likelihood}\n\
+          Probability: {probability}%\nRecommendation: {diagnosis['recommendation']}\n\
+          \nStatus: Pipeline Active'''\n\n    axes[1, 1].text(0.05, 0.5, result_text,\n\
+          \                   transform=axes[1, 1].transAxes, fontsize=10,\n     \
+          \              color=color, verticalalignment='center', wrap=True)\n   \
+          \ axes[1, 1].set_title('Diagnosis Results')\n    axes[1, 1].axis('off')\n\
+          \n    plt.tight_layout()\n\n    # Save visualization\n    output_path =\
+          \ Path(output_dir) / f\"{patient_id}_pipeline.png\"\n    output_path.parent.mkdir(parents=True,\
+          \ exist_ok=True)\n    plt.savefig(output_path, dpi=150, bbox_inches='tight')\n\
+          \    plt.close()\n\n    viz_results = {\n        \"component\": \"visualization\"\
+          ,\n        \"patient_id\": patient_id,\n        \"visualization_file\":\
+          \ str(output_path),\n        \"likelihood\": likelihood,\n        \"pipeline_stages\"\
+          : 4,\n        \"status\": \"completed\"\n    }\n\n    return json.dumps(viz_results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-create-visualization-op-3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_visualization_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_visualization_op(\n    detection_result: str,\n    patient_id:\
+          \ str,\n    output_dir: str\n) -> str:\n    \"\"\"Visualization Component\
+          \ - Patient Specific\"\"\"\n    import json\n    import numpy as np\n  \
+          \  import matplotlib.pyplot as plt\n    from pathlib import Path\n\n   \
+          \ print(f\"[VISUALIZE] Processing: {patient_id}\")\n\n    # Parse detection\
+          \ results\n    results = json.loads(detection_result)\n    diagnosis = results['final_diagnosis']\n\
+          \n    # Create visualization showing pipeline stages\n    fig, axes = plt.subplots(2,\
+          \ 2, figsize=(12, 10))\n    fig.suptitle(f'COVID-19 Pipeline - {patient_id}',\
+          \ fontsize=16, fontweight='bold')\n\n    # Pipeline stages\n    stages =\
+          \ [\n        (\"Load Data\", \"Data\", \"green\", \"Completed\"),\n    \
+          \    (\"Lung Seg\", \"Segment\", \"blue\", \"Completed\"),\n        (\"\
+          COVID Detect\", \"Detect\", \"orange\", \"Completed\"),\n        (\"Visualization\"\
+          , \"Visual\", \"purple\", \"Completed\")\n    ]\n\n    for idx, (step, short,\
+          \ color, status) in enumerate(stages):\n        row, col = divmod(idx, 2)\n\
+          \        axes[row, col].text(0.5, 0.5, f'{step}\\n{status}',\n         \
+          \                 ha='center', va='center', transform=axes[row, col].transAxes,\n\
+          \                          fontsize=14, fontweight='bold', color=color)\n\
+          \        axes[row, col].set_title(f'Component {idx+1}')\n        axes[row,\
+          \ col].axis('off')\n\n    # COVID results\n    likelihood = diagnosis['likelihood']\n\
+          \    probability = diagnosis['probability']\n\n    colors_map = {\n    \
+          \    'HIGH': '#FF4444',    # Red\n        'MODERATE': '#FFA500', # Orange\n\
+          \        'LOW': '#4CAF50',     # Green\n        'VERY_LOW': '#4CAF50'  #\
+          \ Green\n    }\n    color = colors_map.get(likelihood, '#666666')\n\n  \
+          \  result_text = f'''COVID-19 Results - {patient_id}\n\nLikelihood: {likelihood}\n\
+          Probability: {probability}%\nRecommendation: {diagnosis['recommendation']}\n\
+          \nStatus: Pipeline Active'''\n\n    axes[1, 1].text(0.05, 0.5, result_text,\n\
+          \                   transform=axes[1, 1].transAxes, fontsize=10,\n     \
+          \              color=color, verticalalignment='center', wrap=True)\n   \
+          \ axes[1, 1].set_title('Diagnosis Results')\n    axes[1, 1].axis('off')\n\
+          \n    plt.tight_layout()\n\n    # Save visualization\n    output_path =\
+          \ Path(output_dir) / f\"{patient_id}_pipeline.png\"\n    output_path.parent.mkdir(parents=True,\
+          \ exist_ok=True)\n    plt.savefig(output_path, dpi=150, bbox_inches='tight')\n\
+          \    plt.close()\n\n    viz_results = {\n        \"component\": \"visualization\"\
+          ,\n        \"patient_id\": patient_id,\n        \"visualization_file\":\
+          \ str(output_path),\n        \"likelihood\": likelihood,\n        \"pipeline_stages\"\
+          : 4,\n        \"status\": \"completed\"\n    }\n\n    return json.dumps(viz_results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-create-visualization-op-4:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_visualization_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_visualization_op(\n    detection_result: str,\n    patient_id:\
+          \ str,\n    output_dir: str\n) -> str:\n    \"\"\"Visualization Component\
+          \ - Patient Specific\"\"\"\n    import json\n    import numpy as np\n  \
+          \  import matplotlib.pyplot as plt\n    from pathlib import Path\n\n   \
+          \ print(f\"[VISUALIZE] Processing: {patient_id}\")\n\n    # Parse detection\
+          \ results\n    results = json.loads(detection_result)\n    diagnosis = results['final_diagnosis']\n\
+          \n    # Create visualization showing pipeline stages\n    fig, axes = plt.subplots(2,\
+          \ 2, figsize=(12, 10))\n    fig.suptitle(f'COVID-19 Pipeline - {patient_id}',\
+          \ fontsize=16, fontweight='bold')\n\n    # Pipeline stages\n    stages =\
+          \ [\n        (\"Load Data\", \"Data\", \"green\", \"Completed\"),\n    \
+          \    (\"Lung Seg\", \"Segment\", \"blue\", \"Completed\"),\n        (\"\
+          COVID Detect\", \"Detect\", \"orange\", \"Completed\"),\n        (\"Visualization\"\
+          , \"Visual\", \"purple\", \"Completed\")\n    ]\n\n    for idx, (step, short,\
+          \ color, status) in enumerate(stages):\n        row, col = divmod(idx, 2)\n\
+          \        axes[row, col].text(0.5, 0.5, f'{step}\\n{status}',\n         \
+          \                 ha='center', va='center', transform=axes[row, col].transAxes,\n\
+          \                          fontsize=14, fontweight='bold', color=color)\n\
+          \        axes[row, col].set_title(f'Component {idx+1}')\n        axes[row,\
+          \ col].axis('off')\n\n    # COVID results\n    likelihood = diagnosis['likelihood']\n\
+          \    probability = diagnosis['probability']\n\n    colors_map = {\n    \
+          \    'HIGH': '#FF4444',    # Red\n        'MODERATE': '#FFA500', # Orange\n\
+          \        'LOW': '#4CAF50',     # Green\n        'VERY_LOW': '#4CAF50'  #\
+          \ Green\n    }\n    color = colors_map.get(likelihood, '#666666')\n\n  \
+          \  result_text = f'''COVID-19 Results - {patient_id}\n\nLikelihood: {likelihood}\n\
+          Probability: {probability}%\nRecommendation: {diagnosis['recommendation']}\n\
+          \nStatus: Pipeline Active'''\n\n    axes[1, 1].text(0.05, 0.5, result_text,\n\
+          \                   transform=axes[1, 1].transAxes, fontsize=10,\n     \
+          \              color=color, verticalalignment='center', wrap=True)\n   \
+          \ axes[1, 1].set_title('Diagnosis Results')\n    axes[1, 1].axis('off')\n\
+          \n    plt.tight_layout()\n\n    # Save visualization\n    output_path =\
+          \ Path(output_dir) / f\"{patient_id}_pipeline.png\"\n    output_path.parent.mkdir(parents=True,\
+          \ exist_ok=True)\n    plt.savefig(output_path, dpi=150, bbox_inches='tight')\n\
+          \    plt.close()\n\n    viz_results = {\n        \"component\": \"visualization\"\
+          ,\n        \"patient_id\": patient_id,\n        \"visualization_file\":\
+          \ str(output_path),\n        \"likelihood\": likelihood,\n        \"pipeline_stages\"\
+          : 4,\n        \"status\": \"completed\"\n    }\n\n    return json.dumps(viz_results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-detect-covid-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - detect_covid_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef detect_covid_op(\n    segmentation_result: str,\n    patient_id:\
+          \ str\n) -> str:\n    \"\"\"COVID Detection Component - Patient Specific\"\
+          \"\"\n    import json\n    import numpy as np\n\n    print(f\"[DETECT-COVID]\
+          \ Processing: {patient_id}\")\n\n    # Simulate COVID detection\n    np.random.seed(100\
+          \ + hash(patient_id) % 10)\n    infection_ratio = np.random.uniform(0.05,\
+          \ 0.35)\n\n    if infection_ratio > 0.25:\n        likelihood = \"HIGH\"\
+          \n        probability = int(75 + np.random.uniform(0, 20))\n    elif infection_ratio\
+          \ > 0.15:\n        likelihood = \"MODERATE\"\n        probability = int(50\
+          \ + np.random.uniform(0, 25))\n    else:\n        likelihood = \"LOW\"\n\
+          \        probability = int(20 + np.random.uniform(0, 30))\n\n    recommendation_map\
+          \ = {\n        \"HIGH\": \"Urgent radiologist review required\",\n     \
+          \   \"MODERATE\": \"Radiologist review within 24 hours\",\n        \"LOW\"\
+          : \"Consider follow-up imaging in 3-5 days\"\n    }\n\n    results = {\n\
+          \        \"component\": \"covid_detection\",\n        \"patient_id\": patient_id,\n\
+          \        \"final_diagnosis\": {\n            \"likelihood\": likelihood,\n\
+          \            \"probability\": probability,\n            \"confidence\":\
+          \ \"medium\",\n            \"recommendation\": recommendation_map[likelihood]\n\
+          \        },\n        \"infection_ratio\": float(infection_ratio),\n    \
+          \    \"status\": \"completed\"\n    }\n\n    return json.dumps(results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-detect-covid-op-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - detect_covid_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef detect_covid_op(\n    segmentation_result: str,\n    patient_id:\
+          \ str\n) -> str:\n    \"\"\"COVID Detection Component - Patient Specific\"\
+          \"\"\n    import json\n    import numpy as np\n\n    print(f\"[DETECT-COVID]\
+          \ Processing: {patient_id}\")\n\n    # Simulate COVID detection\n    np.random.seed(100\
+          \ + hash(patient_id) % 10)\n    infection_ratio = np.random.uniform(0.05,\
+          \ 0.35)\n\n    if infection_ratio > 0.25:\n        likelihood = \"HIGH\"\
+          \n        probability = int(75 + np.random.uniform(0, 20))\n    elif infection_ratio\
+          \ > 0.15:\n        likelihood = \"MODERATE\"\n        probability = int(50\
+          \ + np.random.uniform(0, 25))\n    else:\n        likelihood = \"LOW\"\n\
+          \        probability = int(20 + np.random.uniform(0, 30))\n\n    recommendation_map\
+          \ = {\n        \"HIGH\": \"Urgent radiologist review required\",\n     \
+          \   \"MODERATE\": \"Radiologist review within 24 hours\",\n        \"LOW\"\
+          : \"Consider follow-up imaging in 3-5 days\"\n    }\n\n    results = {\n\
+          \        \"component\": \"covid_detection\",\n        \"patient_id\": patient_id,\n\
+          \        \"final_diagnosis\": {\n            \"likelihood\": likelihood,\n\
+          \            \"probability\": probability,\n            \"confidence\":\
+          \ \"medium\",\n            \"recommendation\": recommendation_map[likelihood]\n\
+          \        },\n        \"infection_ratio\": float(infection_ratio),\n    \
+          \    \"status\": \"completed\"\n    }\n\n    return json.dumps(results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-detect-covid-op-3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - detect_covid_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef detect_covid_op(\n    segmentation_result: str,\n    patient_id:\
+          \ str\n) -> str:\n    \"\"\"COVID Detection Component - Patient Specific\"\
+          \"\"\n    import json\n    import numpy as np\n\n    print(f\"[DETECT-COVID]\
+          \ Processing: {patient_id}\")\n\n    # Simulate COVID detection\n    np.random.seed(100\
+          \ + hash(patient_id) % 10)\n    infection_ratio = np.random.uniform(0.05,\
+          \ 0.35)\n\n    if infection_ratio > 0.25:\n        likelihood = \"HIGH\"\
+          \n        probability = int(75 + np.random.uniform(0, 20))\n    elif infection_ratio\
+          \ > 0.15:\n        likelihood = \"MODERATE\"\n        probability = int(50\
+          \ + np.random.uniform(0, 25))\n    else:\n        likelihood = \"LOW\"\n\
+          \        probability = int(20 + np.random.uniform(0, 30))\n\n    recommendation_map\
+          \ = {\n        \"HIGH\": \"Urgent radiologist review required\",\n     \
+          \   \"MODERATE\": \"Radiologist review within 24 hours\",\n        \"LOW\"\
+          : \"Consider follow-up imaging in 3-5 days\"\n    }\n\n    results = {\n\
+          \        \"component\": \"covid_detection\",\n        \"patient_id\": patient_id,\n\
+          \        \"final_diagnosis\": {\n            \"likelihood\": likelihood,\n\
+          \            \"probability\": probability,\n            \"confidence\":\
+          \ \"medium\",\n            \"recommendation\": recommendation_map[likelihood]\n\
+          \        },\n        \"infection_ratio\": float(infection_ratio),\n    \
+          \    \"status\": \"completed\"\n    }\n\n    return json.dumps(results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-detect-covid-op-4:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - detect_covid_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef detect_covid_op(\n    segmentation_result: str,\n    patient_id:\
+          \ str\n) -> str:\n    \"\"\"COVID Detection Component - Patient Specific\"\
+          \"\"\n    import json\n    import numpy as np\n\n    print(f\"[DETECT-COVID]\
+          \ Processing: {patient_id}\")\n\n    # Simulate COVID detection\n    np.random.seed(100\
+          \ + hash(patient_id) % 10)\n    infection_ratio = np.random.uniform(0.05,\
+          \ 0.35)\n\n    if infection_ratio > 0.25:\n        likelihood = \"HIGH\"\
+          \n        probability = int(75 + np.random.uniform(0, 20))\n    elif infection_ratio\
+          \ > 0.15:\n        likelihood = \"MODERATE\"\n        probability = int(50\
+          \ + np.random.uniform(0, 25))\n    else:\n        likelihood = \"LOW\"\n\
+          \        probability = int(20 + np.random.uniform(0, 30))\n\n    recommendation_map\
+          \ = {\n        \"HIGH\": \"Urgent radiologist review required\",\n     \
+          \   \"MODERATE\": \"Radiologist review within 24 hours\",\n        \"LOW\"\
+          : \"Consider follow-up imaging in 3-5 days\"\n    }\n\n    results = {\n\
+          \        \"component\": \"covid_detection\",\n        \"patient_id\": patient_id,\n\
+          \        \"final_diagnosis\": {\n            \"likelihood\": likelihood,\n\
+          \            \"probability\": probability,\n            \"confidence\":\
+          \ \"medium\",\n            \"recommendation\": recommendation_map[likelihood]\n\
+          \        },\n        \"infection_ratio\": float(infection_ratio),\n    \
+          \    \"status\": \"completed\"\n    }\n\n    return json.dumps(results)\n\
+          \n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-generate-parallel-summary-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_parallel_summary_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.6'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_parallel_summary_op(\n    patient_1_viz: str,\n    patient_2_viz:\
+          \ str,\n    patient_3_viz: str,\n    patient_4_viz: str,\n    output_dir:\
+          \ str\n) -> str:\n    \"\"\"Generate Summary Component - All Patients\"\"\
+          \"\n    import json\n    from datetime import datetime\n    from pathlib\
+          \ import Path\n\n    print(f\"[SUMMARY] Generating parallel processing summary\"\
+          )\n\n    viz_results = [\n        json.loads(patient_1_viz),\n        json.loads(patient_2_viz),\n\
+          \        json.loads(patient_3_viz),\n        json.loads(patient_4_viz)\n\
+          \    ]\n\n    # Count risk levels\n    risk_counts = {\n        \"HIGH\"\
+          : sum(1 for v in viz_results if v.get(\"likelihood\") == \"HIGH\"),\n  \
+          \      \"MODERATE\": sum(1 for v in viz_results if v.get(\"likelihood\"\
+          ) == \"MODERATE\"),\n        \"LOW\": sum(1 for v in viz_results if v.get(\"\
+          likelihood\") == \"LOW\"),\n        \"VERY_LOW\": sum(1 for v in viz_results\
+          \ if v.get(\"likelihood\") == \"VERY_LOW\")\n    }\n\n    report = {\n \
+          \       \"parallel_processing_report\": {\n            \"timestamp\": datetime.now().isoformat(),\n\
+          \            \"total_patients\": len(viz_results),\n            \"successful\"\
+          : len(viz_results),\n            \"processing_mode\": \"parallel_visual\"\
+          ,\n            \"pipeline_architecture\": \"individual_components_per_patient\"\
+          \n        },\n        \"workflow_visualization\": {\n            \"description\"\
+          : \"4 Patients with Individual Component Tracking\",\n            \"pipeline_per_patient\"\
+          : [\n                \"1. Load Data (load_patient_data_op)\",\n        \
+          \        \"2. Lung Segmentation (segment_lungs_op)\",\n                \"\
+          3. COVID Detection (detect_covid_op)\",\n                \"4. Visualization\
+          \ (create_visualization_op)\"\n            ],\n            \"total_components\"\
+          : 16,  # 4 patients \xD7 4 components\n            \"component_separation\"\
+          : True\n        },\n        \"patients\": [{\"patient_id\": v.get(\"patient_id\"\
+          ), \"component\": v.get(\"component\"), \"likelihood\": v.get(\"likelihood\"\
+          )} for v in viz_results],\n        \"risk_distribution\": risk_counts,\n\
+          \        \"kubeflow_ui_display\": {\n            \"total_components\": 16,\n\
+          \            \"component_types\": 4,\n            \"patients_processed\"\
+          : 4,\n            \"clear_separation\": \"Each component type shows as separate\
+          \ task\"\n        }\n    }\n\n    # Save report\n    output_path = Path(output_dir)\
+          \ / \"parallel_summary_report.json\"\n    output_path.parent.mkdir(parents=True,\
+          \ exist_ok=True)\n\n    with open(output_path, 'w') as f:\n        json.dump(report,\
+          \ f, indent=2)\n\n    return json.dumps({\"status\": \"completed\", \"report_file\"\
+          : str(output_path)})\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 1.073741824
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 1Gi
+    exec-load-patient-data-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_patient_data_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_patient_data_op(\n    input_dir: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Load Data Component - Patient Specific\"\"\"\n    import\
+          \ json\n\n    print(f\"[LOAD-DATA] Processing: {patient_id}\")\n\n    metadata\
+          \ = {\n        \"component\": \"load_data\",\n        \"patient_id\": patient_id,\n\
+          \        \"status\": \"completed\",\n        \"timestamp\": \"2025-11-17T20:00:00Z\"\
+          \n    }\n\n    return json.dumps(metadata)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-load-patient-data-op-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_patient_data_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_patient_data_op(\n    input_dir: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Load Data Component - Patient Specific\"\"\"\n    import\
+          \ json\n\n    print(f\"[LOAD-DATA] Processing: {patient_id}\")\n\n    metadata\
+          \ = {\n        \"component\": \"load_data\",\n        \"patient_id\": patient_id,\n\
+          \        \"status\": \"completed\",\n        \"timestamp\": \"2025-11-17T20:00:00Z\"\
+          \n    }\n\n    return json.dumps(metadata)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-load-patient-data-op-3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_patient_data_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_patient_data_op(\n    input_dir: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Load Data Component - Patient Specific\"\"\"\n    import\
+          \ json\n\n    print(f\"[LOAD-DATA] Processing: {patient_id}\")\n\n    metadata\
+          \ = {\n        \"component\": \"load_data\",\n        \"patient_id\": patient_id,\n\
+          \        \"status\": \"completed\",\n        \"timestamp\": \"2025-11-17T20:00:00Z\"\
+          \n    }\n\n    return json.dumps(metadata)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-load-patient-data-op-4:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_patient_data_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_patient_data_op(\n    input_dir: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Load Data Component - Patient Specific\"\"\"\n    import\
+          \ json\n\n    print(f\"[LOAD-DATA] Processing: {patient_id}\")\n\n    metadata\
+          \ = {\n        \"component\": \"load_data\",\n        \"patient_id\": patient_id,\n\
+          \        \"status\": \"completed\",\n        \"timestamp\": \"2025-11-17T20:00:00Z\"\
+          \n    }\n\n    return json.dumps(metadata)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 2Gi
+    exec-segment-lungs-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - segment_lungs_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef segment_lungs_op(\n    load_result: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Lung Segmentation Component - Patient Specific\"\"\"\
+          \n    import json\n    import numpy as np\n\n    print(f\"[SEGMENT] Processing:\
+          \ {patient_id}\")\n\n    # Simulate segmentation work\n    np.random.seed(42\
+          \ + hash(patient_id) % 10)\n    lung_volume = int(np.random.uniform(7000000,\
+          \ 9000000))\n\n    results = {\n        \"component\": \"lung_segmentation\"\
+          ,\n        \"patient_id\": patient_id,\n        \"lung_volume\": lung_volume,\n\
+          \        \"right_lung\": int(lung_volume * 0.55),\n        \"left_lung\"\
+          : int(lung_volume * 0.45),\n        \"status\": \"completed\"\n    }\n\n\
+          \    return json.dumps(results)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-segment-lungs-op-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - segment_lungs_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef segment_lungs_op(\n    load_result: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Lung Segmentation Component - Patient Specific\"\"\"\
+          \n    import json\n    import numpy as np\n\n    print(f\"[SEGMENT] Processing:\
+          \ {patient_id}\")\n\n    # Simulate segmentation work\n    np.random.seed(42\
+          \ + hash(patient_id) % 10)\n    lung_volume = int(np.random.uniform(7000000,\
+          \ 9000000))\n\n    results = {\n        \"component\": \"lung_segmentation\"\
+          ,\n        \"patient_id\": patient_id,\n        \"lung_volume\": lung_volume,\n\
+          \        \"right_lung\": int(lung_volume * 0.55),\n        \"left_lung\"\
+          : int(lung_volume * 0.45),\n        \"status\": \"completed\"\n    }\n\n\
+          \    return json.dumps(results)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-segment-lungs-op-3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - segment_lungs_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef segment_lungs_op(\n    load_result: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Lung Segmentation Component - Patient Specific\"\"\"\
+          \n    import json\n    import numpy as np\n\n    print(f\"[SEGMENT] Processing:\
+          \ {patient_id}\")\n\n    # Simulate segmentation work\n    np.random.seed(42\
+          \ + hash(patient_id) % 10)\n    lung_volume = int(np.random.uniform(7000000,\
+          \ 9000000))\n\n    results = {\n        \"component\": \"lung_segmentation\"\
+          ,\n        \"patient_id\": patient_id,\n        \"lung_volume\": lung_volume,\n\
+          \        \"right_lung\": int(lung_volume * 0.55),\n        \"left_lung\"\
+          : int(lung_volume * 0.45),\n        \"status\": \"completed\"\n    }\n\n\
+          \    return json.dumps(results)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-segment-lungs-op-4:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - segment_lungs_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef segment_lungs_op(\n    load_result: str,\n    patient_id: str\n\
+          ) -> str:\n    \"\"\"Lung Segmentation Component - Patient Specific\"\"\"\
+          \n    import json\n    import numpy as np\n\n    print(f\"[SEGMENT] Processing:\
+          \ {patient_id}\")\n\n    # Simulate segmentation work\n    np.random.seed(42\
+          \ + hash(patient_id) % 10)\n    lung_volume = int(np.random.uniform(7000000,\
+          \ 9000000))\n\n    results = {\n        \"component\": \"lung_segmentation\"\
+          ,\n        \"patient_id\": patient_id,\n        \"lung_volume\": lung_volume,\n\
+          \        \"right_lung\": int(lung_volume * 0.55),\n        \"left_lung\"\
+          : int(lung_volume * 0.45),\n        \"status\": \"completed\"\n    }\n\n\
+          \    return json.dumps(results)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+pipelineInfo:
+  description: Parallel COVID-19 Detection Pipeline - 4 Patients with Individual Component
+    Separation (Clean Version)
+  name: clean-parallel-covid-pipeline
+root:
+  dag:
+    tasks:
+      create-visualization-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op
+        dependentTasks:
+        - detect-covid-op
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+        taskInfo:
+          name: Patient 1 - Create Viz
+      create-visualization-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-2
+        dependentTasks:
+        - detect-covid-op-2
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op-2
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+        taskInfo:
+          name: Patient 2 - Create Viz
+      create-visualization-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-3
+        dependentTasks:
+        - detect-covid-op-3
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op-3
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+        taskInfo:
+          name: Patient 3 - Create Viz
+      create-visualization-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-4
+        dependentTasks:
+        - detect-covid-op-4
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op-4
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+        taskInfo:
+          name: Patient 4 - Create Viz
+      detect-covid-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op
+        dependentTasks:
+        - segment-lungs-op
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op
+        taskInfo:
+          name: Patient 1 - Detect COVID
+      detect-covid-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-2
+        dependentTasks:
+        - segment-lungs-op-2
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op-2
+        taskInfo:
+          name: Patient 2 - Detect COVID
+      detect-covid-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-3
+        dependentTasks:
+        - segment-lungs-op-3
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op-3
+        taskInfo:
+          name: Patient 3 - Detect COVID
+      detect-covid-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-4
+        dependentTasks:
+        - segment-lungs-op-4
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op-4
+        taskInfo:
+          name: Patient 4 - Detect COVID
+      generate-parallel-summary-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-parallel-summary-op
+        dependentTasks:
+        - create-visualization-op
+        - create-visualization-op-2
+        - create-visualization-op-3
+        - create-visualization-op-4
+        inputs:
+          parameters:
+            output_dir:
+              componentInputParameter: output_dir
+            patient_1_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op
+            patient_2_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op-2
+            patient_3_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op-3
+            patient_4_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op-4
+        taskInfo:
+          name: Generate Parallel Summary
+      load-patient-data-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+        taskInfo:
+          name: Patient 1 - Load Data
+      load-patient-data-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op-2
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+        taskInfo:
+          name: Patient 2 - Load Data
+      load-patient-data-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op-3
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+        taskInfo:
+          name: Patient 3 - Load Data
+      load-patient-data-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op-4
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+        taskInfo:
+          name: Patient 4 - Load Data
+      segment-lungs-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op
+        dependentTasks:
+        - load-patient-data-op
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+        taskInfo:
+          name: Patient 1 - Segment Lungs
+      segment-lungs-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-2
+        dependentTasks:
+        - load-patient-data-op-2
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op-2
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+        taskInfo:
+          name: Patient 2 - Segment Lungs
+      segment-lungs-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-3
+        dependentTasks:
+        - load-patient-data-op-3
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op-3
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+        taskInfo:
+          name: Patient 3 - Segment Lungs
+      segment-lungs-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-4
+        dependentTasks:
+        - load-patient-data-op-4
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op-4
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+        taskInfo:
+          name: Patient 4 - Segment Lungs
+  inputDefinitions:
+    parameters:
+      input_dir:
+        defaultValue: /mnt/data/weekly_input
+        isOptional: true
+        parameterType: STRING
+      output_dir:
+        defaultValue: /mnt/data/hospital_output
+        isOptional: true
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.14.6

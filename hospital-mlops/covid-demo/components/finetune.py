@@ -14,6 +14,7 @@ from monai.networks.nets import UNet
 from monai.losses import DiceCELoss
 from monai.transforms import Compose, LoadImaged, EnsureChannelFirstd, ScaleIntensityRanged, EnsureTyped
 from monai.data import DataLoader, Dataset
+from path_utils import get_data_path
 
 
 def create_synthetic_labels(ct_array, lung_mask):
@@ -40,11 +41,12 @@ def create_synthetic_labels(ct_array, lung_mask):
 def collect_training_data(patient_ids):
     """Collect data from processed patients for fine-tuning"""
     training_data = []
+    base_path = get_data_path()
 
     for patient_id in patient_ids:
-        ct_path = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/ct_array.npy")
-        mask_path = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/lung_mask.nii.gz")
-        results_path = Path(f"/mnt/data/covid_outputs/week_current/{patient_id}/covid_results.json")
+        ct_path = base_path / f"covid_inputs/week_current/{patient_id}/ct_array.npy"
+        mask_path = base_path / f"covid_inputs/week_current/{patient_id}/lung_mask.nii.gz"
+        results_path = base_path / f"covid_outputs/week_current/{patient_id}/covid_results.json"
 
         # Only use high likelihood cases for fine-tuning
         if results_path.exists():
@@ -79,7 +81,8 @@ def finetune_model(batch_id: str, patient_ids: list):
     print(f"{'='*60}")
 
     try:
-        output_dir = Path(f"/mnt/data/covid_outputs/finetuned_models")
+        base_path = get_data_path()
+        output_dir = base_path / "covid_outputs/finetuned_models"
         output_dir.mkdir(parents=True, exist_ok=True)
 
         model_path = output_dir / f"finetuned_model_{batch_id}.pth"
@@ -111,7 +114,7 @@ def finetune_model(batch_id: str, patient_ids: list):
             label_array = create_synthetic_labels(ct_array, lung_mask)
 
             # Save temporarily
-            temp_dir = Path(f"/mnt/data/covid_inputs/temp_finetune/{data['patient_id']}")
+            temp_dir = base_path / f"covid_inputs/temp_finetune/{data['patient_id']}"
             temp_dir.mkdir(parents=True, exist_ok=True)
 
             ct_file = temp_dir / "ct.npy"

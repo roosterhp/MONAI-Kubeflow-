@@ -19,6 +19,12 @@ data/
 # Large model files
 models/
 pretrained-models/
+pretrained_weights/
+**/pretrained_weights/
+*.pth
+*.pt
+*.ckpt
+*.safetensors
 
 # IDE
 .vscode/

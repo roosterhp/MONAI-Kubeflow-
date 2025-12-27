@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import json
 from pathlib import Path
+from path_utils import get_data_path, get_hospital_output_path
 
 
 def create_visualization(patient_id: str):
@@ -28,12 +29,13 @@ def create_visualization(patient_id: str):
 
     try:
         # Paths
-        ct_array_file = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/ct_array.npy")
-        lung_mask_file = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/lung_mask.nii.gz")
-        results_file = Path(f"/mnt/data/covid_outputs/week_current/{patient_id}/covid_results.json")
-        features_file = Path(f"/mnt/data/covid_outputs/week_current/{patient_id}/features.json")
+        data_path = get_data_path()
+        ct_array_file = data_path / f"covid_inputs/week_current/{patient_id}/ct_array.npy"
+        lung_mask_file = data_path / f"covid_inputs/week_current/{patient_id}/lung_mask.nii.gz"
+        results_file = data_path / f"covid_outputs/week_current/{patient_id}/covid_results.json"
+        features_file = data_path / f"covid_outputs/week_current/{patient_id}/features.json"
 
-        output_dir = Path(f"/mnt/data/covid_outputs/week_current/{patient_id}")
+        output_dir = data_path / f"covid_outputs/week_current/{patient_id}"
         output_file = output_dir / f"full_comparison_{patient_id}.png"
 
         print(f"CT array: {ct_array_file}")

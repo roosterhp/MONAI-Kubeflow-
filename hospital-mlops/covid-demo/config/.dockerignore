@@ -1,0 +1,66 @@
+# Docker build optimization - exclude unnecessary files
+
+# Git
+.git
+.gitignore
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (if not needed in container)
+*.md
+docs/
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Jupyter notebooks (if not needed in container)
+*.ipynb
+
+# Data directories (should be mounted as volumes)
+data/
+output/

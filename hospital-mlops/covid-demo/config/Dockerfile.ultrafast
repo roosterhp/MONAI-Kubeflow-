@@ -1,0 +1,52 @@
+# Ultra-fast Dockerfile with aggressive caching
+# Build time: ~1-2 minutes on subsequent builds
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# ===== SYSTEM DEPENDENCIES (Least frequently changes) =====
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# ===== PIP UPGRADE =====
+RUN pip install --upgrade pip setuptools wheel
+
+# ===== PRE-WARM PACKAGE CACHE =====
+# Download heavy packages first to leverage Docker layer cache
+RUN pip install --no-cache-dir --no-deps \
+    torch==2.0.1 \
+    torchvision==0.15.2 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# ===== COPY AND INSTALL REMAINING PACKAGES =====
+COPY config/requirements.txt /tmp/requirements.txt
+
+# Install remaining packages in a single layer for maximum cache efficiency
+RUN pip install --no-cache-dir \
+    monai==1.3.0 \
+    SimpleITK==2.3.1 \
+    nibabel==5.2.0 \
+    "lungmask @ git+https://github.com/JoHof/lungmask" \
+    matplotlib==3.8.2 \
+    numpy==1.26.3 \
+    kfp==2.5.0
+
+# ===== APPLICATION CODE (Most frequently changes) =====
+COPY components/ /app/components/
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Default command
+CMD ["python", "--version"]
+
+# Build with: docker build -t covid-pipeline:v1 -f Dockerfile.ultrafast .
+
+# Performance tips:
+# 1. Use .dockerignore to exclude .git, __pycache__, etc.
+# 2. Use BuildKit for parallel builds: DOCKER_BUILDKIT=1 docker build
+# 3. Cache mounted pip cache for even faster builds

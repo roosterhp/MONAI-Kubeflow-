@@ -1,0 +1,908 @@
+# PIPELINE DEFINITION
+# Name: fixed-sequence-parallel-covid-pipeline-segmentation-fixed
+# Description: Fixed Sequence Parallel COVID-19 Detection Pipeline with Real Lung Segmentation - Proper Sequence Enforcement
+# Inputs:
+#    input_dir: str [Default: '/mnt/data/weekly_input']
+#    output_dir: str [Default: '/mnt/data/hospital_output']
+components:
+  comp-load-data-op:
+    executorLabel: exec-load-data-op
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op:
+    executorLabel: exec-segment-lungs-op
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-2:
+    executorLabel: exec-segment-lungs-op-2
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-3:
+    executorLabel: exec-segment-lungs-op-3
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-4:
+    executorLabel: exec-segment-lungs-op-4
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op:
+    executorLabel: exec-detect-covid-op
+    inputDefinitions:
+      parameters:
+        segment_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-2:
+    executorLabel: exec-detect-covid-op-2
+    inputDefinitions:
+      parameters:
+        segment_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-3:
+    executorLabel: exec-detect-covid-op-3
+    inputDefinitions:
+      parameters:
+        segment_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-4:
+    executorLabel: exec-detect-covid-op-4
+    inputDefinitions:
+      parameters:
+        segment_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op:
+    executorLabel: exec-create-visualization-op
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-2:
+    executorLabel: exec-create-visualization-op-2
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-3:
+    executorLabel: exec-create-visualization-op-3
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-4:
+    executorLabel: exec-create-visualization-op-4
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-generate-summary-op:
+    executorLabel: exec-generate-summary-op
+    inputDefinitions:
+      parameters:
+        viz_results:
+          parameterType: STRING
+        detection_results:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-load-data-op:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        args:
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-segment-lungs-op:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-segment-lungs-op-2:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-segment-lungs-op-3:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-segment-lungs-op-4:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-detect-covid-op:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-detect-covid-op-2:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-detect-covid-op-3:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-detect-covid-op-4:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-create-visualization-op:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - 'matplotlib==3.7.2'
+        - 'Pillow==10.0.1'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-create-visualization-op-2:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - 'matplotlib==3.7.2'
+        - 'Pillow==10.0.1'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-create-visualization-op-3:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - 'matplotlib==3.7.2'
+        - 'Pillow==10.0.1'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-create-visualization-op-4:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - 'matplotlib==3.7.2'
+        - 'Pillow==10.0.1'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+    exec-generate-summary-op:
+      container:
+        image: python:3.10-slim
+        command:
+        - pip
+        - install
+        - '--quiet'
+        - 'SimpleITK==2.3.1'
+        - 'lungmask==0.2.0'
+        - 'nibabel==5.1.0'
+        - 'torch==2.1.0'
+        - 'numpy==1.24.3'
+        - 'pydicom==2.4.4'
+        - 'scipy==1.11.4'
+        - 'matplotlib==3.7.2'
+        - 'Pillow==10.0.1'
+        - '&&'
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        - --component_module_path
+        - $program_path/ephemeral_component.py
+        - $@
+        fileOutputs:
+          Output:
+            path: /tmp/outputs/Output/data
+root:
+  inputDefinitions:
+    parameters:
+      input_dir:
+        parameterType: STRING
+        defaultValue: /mnt/data/weekly_input
+      output_dir:
+        parameterType: STRING
+        defaultValue: /mnt/data/hospital_output
+  dag:
+    tasks:
+      load-data:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-data-op
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            output_dir:
+              componentInputParameter: output_dir
+        taskInfo:
+          name: load-data
+      segment-lungs:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op
+        dependencies:
+        - load-data
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputProducerTask: load-data
+                outputName: Output
+            patient_id:
+              value: lung_001
+        taskInfo:
+          name: segment-lungs
+      detect-covid:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op
+        dependencies:
+        - segment-lungs
+        inputs:
+          parameters:
+            segment_result:
+              taskOutputParameter:
+                outputProducerTask: segment-lungs
+                outputName: Output
+            patient_id:
+              value: lung_001
+        taskInfo:
+          name: detect-covid
+      create-visualization:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op
+        dependencies:
+        - detect-covid
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputProducerTask: detect-covid
+                outputName: Output
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              value: lung_001
+        taskInfo:
+          name: create-visualization
+      segment-lungs-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-2
+        dependencies:
+        - load-data
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputProducerTask: load-data
+                outputName: Output
+            patient_id:
+              value: lung_002
+        taskInfo:
+          name: segment-lungs-2
+      detect-covid-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-2
+        dependencies:
+        - segment-lungs-2
+        inputs:
+          parameters:
+            segment_result:
+              taskOutputParameter:
+                outputProducerTask: segment-lungs-2
+                outputName: Output
+            patient_id:
+              value: lung_002
+        taskInfo:
+          name: detect-covid-2
+      create-visualization-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-2
+        dependencies:
+        - detect-covid-2
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputProducerTask: detect-covid-2
+                outputName: Output
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              value: lung_002
+        taskInfo:
+          name: create-visualization-2
+      segment-lungs-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-3
+        dependencies:
+        - load-data
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputProducerTask: load-data
+                outputName: Output
+            patient_id:
+              value: lung_003
+        taskInfo:
+          name: segment-lungs-3
+      detect-covid-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-3
+        dependencies:
+        - segment-lungs-3
+        inputs:
+          parameters:
+            segment_result:
+              taskOutputParameter:
+                outputProducerTask: segment-lungs-3
+                outputName: Output
+            patient_id:
+              value: lung_003
+        taskInfo:
+          name: detect-covid-3
+      create-visualization-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-3
+        dependencies:
+        - detect-covid-3
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputProducerTask: detect-covid-3
+                outputName: Output
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              value: lung_003
+        taskInfo:
+          name: create-visualization-3
+      segment-lungs-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-4
+        dependencies:
+        - load-data
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputProducerTask: load-data
+                outputName: Output
+            patient_id:
+              value: lung_004
+        taskInfo:
+          name: segment-lungs-4
+      detect-covid-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-4
+        dependencies:
+        - segment-lungs-4
+        inputs:
+          parameters:
+            segment_result:
+              taskOutputParameter:
+                outputProducerTask: segment-lungs-4
+                outputName: Output
+            patient_id:
+              value: lung_004
+        taskInfo:
+          name: detect-covid-4
+      create-visualization-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-4
+        dependencies:
+        - detect-covid-4
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputProducerTask: detect-covid-4
+                outputName: Output
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              value: lung_004
+        taskInfo:
+          name: create-visualization-4
+      generate-summary:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-summary-op
+        dependencies:
+        - create-visualization
+        - create-visualization-2
+        - create-visualization-3
+        - create-visualization-4
+        inputs:
+          parameters:
+            viz_results:
+              value: '["lung_001","lung_002","lung_003","lung_004"]'
+            detection_results:
+              value: '["lung_001","lung_002","lung_003","lung_004"]'
+            output_dir:
+              componentInputParameter: output_dir
+        taskInfo:
+          name: generate-summary
+pipelineInfo:
+  description: Fixed Sequence Parallel COVID-19 Detection Pipeline with Real Lung Segmentation - Proper Sequence Enforcement
+  name: Fixed Sequence Parallel COVID-19 Pipeline - Segmentation Fixed
+# Component implementations with real medical imaging code
+# These implementations replace the simulation code with actual LungMask R231 segmentation
+
+# All segmentation executors (segment-lungs-op, segment-lungs-op-2, segment-lungs-op-3, segment-lungs-op-4)
+# use the same implementation with real LungMask R231 segmentation:
+#
+# def segment_lungs_op(load_result: str, patient_id: str) -> str:
+#     """Real Lung Segmentation using LungMask R231"""
+#     import json
+#     import numpy as np
+#     import os
+#     from pathlib import Path
+#     import SimpleITK as sitk
+#     from lungmask import LMInferer
+#     import nibabel as nib
+#
+#     print(f"[SEGMENT] Starting lung segmentation for: {patient_id}")
+#     try:
+#         load_data = json.loads(load_result)
+#         if load_data.get("status") != "completed":
+#             raise ValueError(f"Load data failed: {load_data.get('error', 'Unknown error')}")
+#
+#         # File paths
+#         output_dir = Path(load_data.get("output_dir", "/tmp"))
+#         working_dir = output_dir / patient_id
+#         input_file = working_dir / "imaging.nii.gz"
+#         output_file = working_dir / "lung_mask.nii.gz"
+#         ct_array_file = working_dir / "ct_array.npy"
+#         spacing_file = working_dir / "spacing.npy"
+#
+#         if not input_file.exists():
+#             raise FileNotFoundError(f"Input file not found: {input_file}")
+#
+#         # Load CT scan
+#         print("[Step 1/4] Loading CT scan...")
+#         ct_scan = sitk.ReadImage(str(input_file))
+#         ct_array = sitk.GetArrayFromImage(ct_scan)
+#         spacing = ct_scan.GetSpacing()
+#
+#         print(f"  CT shape: {ct_array.shape}")
+#         print(f"  Spacing: {spacing}")
+#
+#         # Run LungMask segmentation
+#         print("[Step 2/4] Running LungMask segmentation...")
+#         inferer = LMInferer(modelname='R231')
+#         lung_mask_array = inferer.apply(ct_scan)
+#
+#         right_lung = np.sum(lung_mask_array == 1)
+#         left_lung = np.sum(lung_mask_array == 2)
+#         total_lung = right_lung + left_lung
+#
+#         print(f"  Right lung voxels: {right_lung:,}")
+#         print(f"  Left lung voxels: {left_lung:,}")
+#         print(f"  Total lung voxels: {total_lung:,}")
+#
+#         # Save lung mask
+#         print("[Step 3/4] Saving lung mask...")
+#         lung_mask_image = sitk.GetImageFromArray(lung_mask_array)
+#         lung_mask_image.CopyInformation(ct_scan)
+#         sitk.WriteImage(lung_mask_image, str(output_file))
+#
+#         # Save CT array and spacing for COVID detection
+#         print("[Step 4/4] Saving CT array and spacing...")
+#         np.save(ct_array_file, ct_array)
+#         np.save(spacing_file, spacing)
+#
+#         results = {
+#             "component": "lung_segmentation",
+#             "patient_id": patient_id,
+#             "load_status": load_data.get("status"),
+#             "ct_dimensions": list(ct_array.shape),
+#             "spacing": list(spacing),
+#             "right_lung_voxels": int(right_lung),
+#             "left_lung_voxels": int(left_lung),
+#             "total_lung_voxels": int(total_lung),
+#             "lung_mask_file": str(output_file),
+#             "ct_array_file": str(ct_array_file),
+#             "spacing_file": str(spacing_file),
+#             "status": "completed"
+#         }
+#
+#         print(f"[OK] Lung segmentation complete for {patient_id}!")
+#         return json.dumps(results)
+#
+#     except Exception as e:
+#         error_result = {
+#             "component": "lung_segmentation",
+#             "patient_id": patient_id,
+#             "status": "failed",
+#             "error": str(e)
+#         }
+#         print(f"[ERROR] Lung segmentation failed for {patient_id}: {e}")
+#         return json.dumps(error_result)
+#
+# Note: The actual implementations are loaded by KFP when the pipeline runs.

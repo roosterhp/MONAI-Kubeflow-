@@ -1,0 +1,307 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: covid-v2-
+  labels:
+    workflows.argoproj.io/archive-strategy: "false"
+  annotations:
+    workflows.argoproj.io/description: COVID-19 Detection Pipeline V2
+spec:
+  entrypoint: main
+  serviceAccountName: pipeline-runner
+
+  arguments:
+    parameters:
+    - name: input_dir
+      value: /tmp/covid_input
+    - name: output_dir
+      value: /tmp/covid_output
+
+  templates:
+  - name: main
+    steps:
+    # Patient 1
+    - - name: p1-load
+        template: load-data
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+
+    - - name: p1-segment
+        template: segment-lungs
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+          - name: prev_result
+            value: "{{steps.p1-load.outputs.result}}"
+
+    - - name: p1-detect
+        template: detect-covid
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+          - name: prev_result
+            value: "{{steps.p1-segment.outputs.result}}"
+
+    - - name: p1-viz
+        template: visualize
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_001
+          - name: prev_result
+            value: "{{steps.p1-detect.outputs.result}}"
+
+    # Patient 2
+    - - name: p2-load
+        template: load-data
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+
+    - - name: p2-segment
+        template: segment-lungs
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+          - name: prev_result
+            value: "{{steps.p2-load.outputs.result}}"
+
+    - - name: p2-detect
+        template: detect-covid
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+          - name: prev_result
+            value: "{{steps.p2-segment.outputs.result}}"
+
+    - - name: p2-viz
+        template: visualize
+        arguments:
+          parameters:
+          - name: patient_id
+            value: lung_002
+          - name: prev_result
+            value: "{{steps.p2-detect.outputs.result}}"
+
+    # Summary
+    - - name: summary
+        template: create-summary
+        arguments:
+          parameters:
+          - name: result1
+            value: "{{steps.p1-viz.outputs.result}}"
+          - name: result2
+            value: "{{steps.p2-viz.outputs.result}}"
+
+  # Load Data Component
+  - name: load-data
+    inputs:
+      parameters:
+      - name: patient_id
+    script:
+      image: python:3.10-slim
+      command: [python]
+      source: |
+        import json
+        from pathlib import Path
+
+        patient_id = "{{inputs.parameters.patient_id}}"
+        print(f"[LOAD] Processing {patient_id}")
+
+        # Create mock data
+        Path("/tmp/covid_input").mkdir(parents=True, exist_ok=True)
+        mock_file = Path(f"/tmp/covid_input/{patient_id}.nii.gz")
+        mock_file.write_bytes(b"MOCK" * 1000)
+
+        result = {
+            "patient_id": patient_id,
+            "component": "load",
+            "file": str(mock_file),
+            "status": "ok"
+        }
+        print(json.dumps(result))
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 250m
+
+  # Segment Lungs Component
+  - name: segment-lungs
+    inputs:
+      parameters:
+      - name: patient_id
+      - name: prev_result
+    script:
+      image: python:3.10-slim
+      command: [python]
+      source: |
+        import json
+        import random
+
+        patient_id = "{{inputs.parameters.patient_id}}"
+        print(f"[SEGMENT] Processing {patient_id}")
+
+        random.seed(hash(patient_id))
+        volume = random.randint(7000000, 9000000)
+
+        result = {
+            "patient_id": patient_id,
+            "component": "segment",
+            "lung_volume": volume,
+            "status": "ok"
+        }
+        print(json.dumps(result))
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 500m
+
+  # Detect COVID Component
+  - name: detect-covid
+    inputs:
+      parameters:
+      - name: patient_id
+      - name: prev_result
+    script:
+      image: python:3.10-slim
+      command: [python]
+      source: |
+        import json
+        import random
+
+        patient_id = "{{inputs.parameters.patient_id}}"
+        print(f"[DETECT] Processing {patient_id}")
+
+        random.seed(hash(patient_id) % 100)
+        prob = random.randint(20, 95)
+        risk = "HIGH" if prob > 75 else "MODERATE" if prob > 50 else "LOW"
+
+        result = {
+            "patient_id": patient_id,
+            "component": "detect",
+            "risk": risk,
+            "probability": prob,
+            "status": "ok"
+        }
+        print(json.dumps(result))
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 250m
+
+  # Visualize Component
+  - name: visualize
+    inputs:
+      parameters:
+      - name: patient_id
+      - name: prev_result
+    outputs:
+      artifacts:
+      - name: viz-image
+        path: /tmp/output.png
+      parameters:
+      - name: result
+        valueFrom:
+          path: /tmp/result.json
+    script:
+      image: python:3.10-slim
+      command: [bash]
+      source: |
+        pip install -q matplotlib &&
+        python << 'EOF'
+        import json
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+        import sys
+
+        patient_id = "{{inputs.parameters.patient_id}}"
+        prev = """{{inputs.parameters.prev_result}}"""
+
+        print(f"[VIZ] Creating visualization for {patient_id}", file=sys.stderr)
+        print(f"[VIZ] Received prev_result: {prev!r}", file=sys.stderr)
+        print(f"[VIZ] Length: {len(prev)}", file=sys.stderr)
+
+        # Try to parse JSON, use defaults if fails
+        try:
+            data = json.loads(prev)
+            risk = data.get("risk", "UNKNOWN")
+            prob = data.get("probability", 0)
+        except Exception as e:
+            print(f"[VIZ] JSON parse failed: {e}, using defaults", file=sys.stderr)
+            risk = "UNKNOWN"
+            prob = 0
+
+        # Create visualization
+        fig, ax = plt.subplots(figsize=(8, 6))
+        fig.suptitle(f"COVID-19 Analysis - {patient_id}", fontsize=14, fontweight="bold")
+
+        ax.text(0.5, 0.7, f"Patient: {patient_id}", ha="center", fontsize=16, weight="bold")
+        ax.text(0.5, 0.5, f"Risk Level: {risk}", ha="center", fontsize=14, color="red" if risk == "HIGH" else "orange" if risk == "MODERATE" else "green")
+        ax.text(0.5, 0.3, f"Probability: {prob}%", ha="center", fontsize=12)
+        ax.axis("off")
+
+        # Save PNG to artifact path
+        plt.savefig("/tmp/output.png", dpi=100, bbox_inches="tight")
+        plt.close()
+
+        print(f"[VIZ] Saved visualization to /tmp/output.png")
+
+        # Save result JSON
+        result = {
+            "patient_id": patient_id,
+            "component": "viz",
+            "risk": risk,
+            "probability": prob,
+            "viz_created": True,
+            "status": "ok"
+        }
+
+        with open("/tmp/result.json", "w") as f:
+            json.dump(result, f)
+
+        print(json.dumps(result))
+        EOF
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 500m
+
+  # Summary Component
+  - name: create-summary
+    inputs:
+      parameters:
+      - name: result1
+      - name: result2
+    script:
+      image: python:3.10-slim
+      command: [python]
+      source: |
+        import json
+        from datetime import datetime
+
+        print("[SUMMARY] Generating report")
+
+        r1 = json.loads('''{{inputs.parameters.result1}}''')
+        r2 = json.loads('''{{inputs.parameters.result2}}''')
+
+        summary = {
+            "timestamp": datetime.now().isoformat(),
+            "total_patients": 2,
+            "results": [r1, r2],
+            "status": "completed"
+        }
+
+        print(json.dumps(summary, indent=2))
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 250m

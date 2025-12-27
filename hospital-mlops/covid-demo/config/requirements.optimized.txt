@@ -1,0 +1,24 @@
+# Optimized requirements with pinned versions for faster builds
+# Updated frequently changes packages to the end
+
+# ===== HEAVY PACKAGES (install first, change infrequently) =====
+torch==2.0.1
+torchvision==0.15.2
+
+# ===== MEDICAL IMAGING (medium frequency changes) =====
+monai==1.3.0
+SimpleITK==2.3.1
+nibabel==5.2.0
+
+# ===== SPECIAL DEPENDENCIES (might change) =====
+lungmask @ git+https://github.com/JoHof/lungmask@main#egg=lungmask
+
+# ===== CORE LIBRARIES (stable) =====
+matplotlib==3.8.2
+numpy==1.26.3
+
+# ===== PIPELINE SPECIFIC (changes most frequently) =====
+kfp==2.5.0
+
+# ===== BUILT-IN PACKAGES =====
+# setuptools, wheel - upgraded via pip install --upgrade

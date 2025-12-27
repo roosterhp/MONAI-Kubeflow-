@@ -1,0 +1,41 @@
+# NVIDIA NGC-based optimized Dockerfile
+# Reduces build time to ~2-3 minutes by using pre-built PyTorch image
+
+# Use NGC PyTorch container with pre-installed PyTorch and CUDA
+FROM nvcr.io/nvidia/pytorch:23.10-py3
+
+WORKDIR /app
+
+# Install additional system dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create requirements file without PyTorch (already installed)
+RUN echo "# Additional dependencies only" > /tmp/requirements.txt && \
+    echo "monai==1.3.0" >> /tmp/requirements.txt && \
+    echo "SimpleITK==2.3.1" >> /tmp/requirements.txt && \
+    echo "nibabel==5.2.0" >> /tmp/requirements.txt && \
+    echo "lungmask @ git+https://github.com/JoHof/lungmask" >> /tmp/requirements.txt && \
+    echo "matplotlib==3.8.2" >> /tmp/requirements.txt && \
+    echo "numpy==1.26.3" >> /tmp/requirements.txt && \
+    echo "kfp==2.5.0" >> /tmp/requirements.txt
+
+# Install all remaining dependencies in parallel with maximum efficiency
+RUN pip install --no-cache-dir \
+    --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir \
+    --requirement /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
+# Copy application code
+COPY components/ /app/components/
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Default command
+CMD ["python", "--version"]
+
+# Build with: docker build -t covid-pipeline:v1 -f Dockerfile.ngc .

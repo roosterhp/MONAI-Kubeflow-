@@ -1,7 +1,7 @@
 """
 Lung Segmentation Component: Use LungMask to segment lungs
-Input: /mnt/data/covid_inputs/week_current/{patient_id}/imaging.nii.gz
-Output: /mnt/data/covid_inputs/week_current/{patient_id}/lung_mask.nii.gz
+Input: covid_inputs/week_current/{patient_id}/imaging.nii.gz
+Output: covid_inputs/week_current/{patient_id}/lung_mask.nii.gz
 """
 
 import sys
@@ -11,6 +11,7 @@ from pathlib import Path
 from lungmask import LMInferer
 import nibabel as nib
 from nibabel.affines import voxel_sizes
+from path_utils import get_data_path
 
 
 def lung_segment(patient_id: str):
@@ -21,10 +22,11 @@ def lung_segment(patient_id: str):
 
     try:
         # Paths
-        input_file = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/imaging.nii.gz")
-        output_file = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/lung_mask.nii.gz")
-        ct_array_file = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/ct_array.npy")
-        spacing_file = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}/spacing.npy")
+        base_path = get_data_path()
+        input_file = base_path / f"covid_inputs/week_current/{patient_id}/imaging.nii.gz"
+        output_file = base_path / f"covid_inputs/week_current/{patient_id}/lung_mask.nii.gz"
+        ct_array_file = base_path / f"covid_inputs/week_current/{patient_id}/ct_array.npy"
+        spacing_file = base_path / f"covid_inputs/week_current/{patient_id}/spacing.npy"
 
         print(f"Input: {input_file}")
         print(f"Output: {output_file}")

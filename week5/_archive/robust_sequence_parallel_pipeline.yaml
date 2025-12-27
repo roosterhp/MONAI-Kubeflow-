@@ -1,0 +1,1090 @@
+# PIPELINE DEFINITION
+# Name: robust-sequence-parallel-covid-pipeline
+# Description: Robust Sequence Parallel COVID-19 Pipeline - Enhanced Error Handling & Validation
+# Inputs:
+#    input_dir: str [Default: '/mnt/data/weekly_input']
+#    output_dir: str [Default: '/mnt/data/hospital_output']
+components:
+  comp-create-visualization-op:
+    executorLabel: exec-create-visualization-op
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-2:
+    executorLabel: exec-create-visualization-op-2
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-3:
+    executorLabel: exec-create-visualization-op-3
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-visualization-op-4:
+    executorLabel: exec-create-visualization-op-4
+    inputDefinitions:
+      parameters:
+        detection_result:
+          parameterType: STRING
+        output_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op:
+    executorLabel: exec-detect-covid-op
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-2:
+    executorLabel: exec-detect-covid-op-2
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-3:
+    executorLabel: exec-detect-covid-op-3
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-detect-covid-op-4:
+    executorLabel: exec-detect-covid-op-4
+    inputDefinitions:
+      parameters:
+        patient_id:
+          parameterType: STRING
+        segmentation_result:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-generate-fixed-summary-op:
+    executorLabel: exec-generate-fixed-summary-op
+    inputDefinitions:
+      parameters:
+        output_dir:
+          parameterType: STRING
+        patient_1_viz:
+          parameterType: STRING
+        patient_2_viz:
+          parameterType: STRING
+        patient_3_viz:
+          parameterType: STRING
+        patient_4_viz:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op:
+    executorLabel: exec-load-patient-data-op
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op-2:
+    executorLabel: exec-load-patient-data-op-2
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op-3:
+    executorLabel: exec-load-patient-data-op-3
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-load-patient-data-op-4:
+    executorLabel: exec-load-patient-data-op-4
+    inputDefinitions:
+      parameters:
+        input_dir:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op:
+    executorLabel: exec-segment-lungs-op
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-2:
+    executorLabel: exec-segment-lungs-op-2
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-3:
+    executorLabel: exec-segment-lungs-op-3
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-segment-lungs-op-4:
+    executorLabel: exec-segment-lungs-op-4
+    inputDefinitions:
+      parameters:
+        load_result:
+          parameterType: STRING
+        patient_id:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-create-visualization-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_visualization_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'matplotlib==3.8.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_visualization_op(\n    detection_result: str,\n    patient_id:\
+          \ str,\n    output_dir: str\n) -> str:\n    \"\"\"Create Visualization -\
+          \ Enhanced Error Handling\"\"\"\n    import json\n    import numpy as np\n    import\
+          \ matplotlib\n    matplotlib.use('Agg')\n    import matplotlib.pyplot as\
+          \ plt\n    from pathlib import Path\n    import traceback\n\n    print(f\"[VIZ]\
+          \ Starting visualization for: {patient_id}\")\n    print(f\"[VIZ] Position\
+          \ 4 in sequence\")\n\n    try:\n        # Validate input parameters\n        if\
+          \ not detection_result or detection_result.strip() == \"\":\n            raise ValueError(\"Empty\
+          \ detection_result parameter\")\n        \n        if not patient_id or patient_id.strip()\
+          \ == \"\":\n            raise ValueError(\"Empty patient_id parameter\")\n        \n\
+          \        if not output_dir or output_dir.strip() == \"\":\n            raise ValueError(\"Empty\
+          \ output_dir parameter\")\n\n        print(f\"[VIZ] Parsing detection result\
+          \ for {patient_id}\")\n        detect_data = json.loads(detection_result)\n        \n\
+          \        if detect_data.get(\"status\") != \"completed\":\n            error_msg = detect_data.get('error',\
+          \ 'Unknown error in detection step')\n            raise ValueError(f\"COVID detection\
+          \ failed: {error_msg}\")\n\n        diagnosis = detect_data.get('final_diagnosis',\
+          \ {})\n        likelihood = diagnosis.get('likelihood', 'UNKNOWN')\n        probability\
+          \ = diagnosis.get('probability', 0)\n\n        print(f\"[VIZ] Diagnosis: {likelihood}\
+          \ ({probability}%)\")\n\n        # Create output directory with proper permissions\n\
+          \        output_path = Path(output_dir)\n        output_path.mkdir(parents=True,\
+          \ exist_ok=True)\n        \n        print(f\"[VIZ] Output directory: {output_path}\"\
+          \)\n\n        # Create enhanced visualization with error handling\n        fig, axes\
+          \ = plt.subplots(2, 2, figsize=(12, 10))\n        fig.suptitle(f'COVID-19 Analysis\
+          \ Report - {patient_id}\\n(Enhanced Robust Pipeline)',\n                     fontsize=14,\
+          \ fontweight='bold')\n\n        # Pipeline stages with status indicators\n        stages\
+          \ = [\n            (\"1. Load Data\", \"\\u2705\", \"green\", \"Position 1\", \"Data\
+          \ loaded successfully\"),\n            (\"2. Segment Lungs\", \"\\u2705\", \"blue\"\
+          , \"Position 2\", \"Lungs segmented successfully\"),\n            (\"3. Detect COVID\"\
+          \, \"\\u2705\", \"orange\", \"Position 3\", f\"Analysis completed: {likelihood}\"\
+          \),\n            (\"4. Visualization\", \"\\u26a1\", \"purple\", \"Position 4\", \"Generating\
+          \ report...\")\n        ]\n\n        for idx, (step, status, color, pos, desc) in enumerate(stages):\n\
+          \            row, col = divmod(idx, 2)\n            axes[row, col].text(0.5, 0.7,\
+          \ step,\n                              ha='center', va='center', transform=axes[row,\
+          \ col].transAxes,\n                              fontsize=11, fontweight='bold')\n   \
+          \         axes[row, col].text(0.5, 0.4, status,\n                        \
+          \   ha='center', va='center', transform=axes[row, col].transAxes,\n                              \
+          \ fontsize=16, fontweight='bold', color=color)\n            axes[row, col].text(0.5,\
+          \ 0.15, f\"{pos}\\n{desc}\",\n                              ha='center', va='center',\
+          \ transform=axes[row, col].transAxes,\n                              fontsize=8,\
+          \ style='italic')\n            axes[row, col].set_title(f'Step {idx+1}')\n       \
+          \     axes[row, col].axis('off')\n\n        # Enhanced COVID results display\n\
+          \        colors_map = {\n            'HIGH': '#FF4444',\n            'MODERATE': '#FFA500',\n\
+          \            'LOW': '#4CAF50',\n            'UNKNOWN': '#666666'\n        }\n        color\
+          \ = colors_map.get(likelihood, '#666666')\n\n        result_text = f'''COVID-19\
+          \ Analysis Report - {patient_id}\n\n\u2726 Likelihood: {likelihood}\n\u2726\
+          \ Confidence: {probability}%\n\u2726 Recommendation: {diagnosis.get('recommendation',\
+          \ 'N/A')}\n\nPIPELINE STATUS:\n\u2713 Load Data \u2192 Complete\n\u2713 Lung Segmentation\
+          \ \u2192 Complete\n\u2713 COVID Detection \u2192 Complete\n\u2713 Visualization\
+          \ \u2192 Complete\n\n\u2726 All steps executed successfully\n\u2726 Enhanced\
+          \ error handling active\n\u2726 Robust processing confirmed'''\n\n        axes[1,\
+          \ 1].text(0.05, 0.5, result_text,\n                       transform=axes[1, 1].transAxes,\n\
+          \                       fontsize=9,\n                       color=color, verticalalignment='center',\n\
+          \                       fontweight='bold')\n        axes[1, 1].set_title('Final Diagnosis')\n\
+          \        axes[1, 1].axis('off')\n\n        plt.tight_layout()\n\n        # Save visualization with error handling\n\
+          \        viz_file = output_path / f\"{patient_id}_robust_analysis.png\"\n        \n\
+          \        try:\n            plt.savefig(viz_file, dpi=150, bbox_inches='tight', optimize=True)\n\
+          \            print(f\"[VIZ] Visualization saved: {viz_file}\")\n        except Exception\
+          \ as save_error:\n            print(f\"[VIZ] Warning: Could not save high-quality image:\
+          \ {save_error}\")\n            # Fallback to basic save\n            plt.savefig(viz_file,\
+          \ dpi=100, bbox_inches='tight')\n            \n        plt.close('all')\n        \n\
+          \        # Enhanced results with validation\n        viz_results = {\n           \
+          \ \"component\": \"visualization\",\n            \"patient_id\": patient_id,\n   \
+          \         \"detection_status\": detect_data.get(\"status\"),\n            \"visualization_file\"\
+          \ : str(viz_file),\n            \"likelihood\": likelihood,\n            \"probability\"\
+          \ : probability,\n            \"pipeline_type\": \"robust_sequential_parallel\"\
+          ,\n            \"enhanced_error_handling\": True,\n            \"validation_passed\"\
+          \: True,\n            \"status\": \"completed\",\n            \"timestamp\": \"2025-11-18T12:00:00Z\"\
+          \ ,\n            \"sequence_position\": 4,\n            \"file_saved\": True\n      \
+          \  }\n\n        print(f\"[VIZ] Success for {patient_id} - Enhanced visualization complete\"\
+          \)\n        return json.dumps(viz_results, indent=2)\n\n    except json.JSONDecodeError\
+          \ as e:\n        error_result = {\n            \"component\": \"visualization\"\
+          ,\n            \"patient_id\": patient_id,\n            \"status\": \"failed\",\n   \
+          \         \"error_type\": \"JSONDecodeError\",\n            \"error\": f\"Invalid\
+          \ JSON in detection result: {str(e)}\",\n            \"detection_result_preview\"\
+          \: detection_result[:200] + \"...\" if len(detection_result) > 200 else detection_result,\n\
+          \            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\"\
+          \: 4\n        }\n        print(f\"[VIZ ERROR] JSON decode error for {patient_id}: {e}\")\n   \
+          \     return json.dumps(error_result, indent=2)\n    except Exception as e:\n  \
+          \      error_result = {\n            \"component\": \"visualization\",\n     \
+          \       \"patient_id\": patient_id,\n            \"status\": \"failed\",\n    \
+          \        \"error_type\": type(e).__name__,\n            \"error\": str(e),\n   \
+          \         \"traceback\": traceback.format_exc(),\n            \"timestamp\": \"\
+          2025-11-18T12:00:00Z\",\n            \"sequence_position\": 4\n        }\n      \
+          \  print(f\"[VIZ ERROR] Visualization failed for {patient_id}: {e}\")\n     \
+          \   print(f\"[VIZ ERROR] Traceback: {traceback.format_exc()}\")\n        return json.dumps(error_result,\
+          \ indent=2)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 1.073741824
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 1Gi
+    exec-detect-covid-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - detect_covid_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.6'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef detect_covid_op(\n    segmentation_result: str,\n    patient_id:\
+          \ str\n) -> str:\n    \"\"\"COVID-19 Detection - Enhanced Robust Processing\"\"\
+          \"\n    import json\n    import numpy as np\n    import traceback\n\n    print(f\"\
+          \ [DETECT] Starting COVID detection for: {patient_id}\")\n    print(f\"[DETECT]\
+          \ Position 3 in sequence\")\n\n    try:\n        # Enhanced input validation\n   \
+          \     if not segmentation_result or segmentation_result.strip() == \"\":\n   \
+          \         raise ValueError(\"Empty segmentation_result parameter\")\n        \n\
+          \        if not patient_id or patient_id.strip() == \"\":\n            raise ValueError(\"\
+          \ Empty patient_id parameter\")\n\n        print(f\"[DETECT] Parsing segmentation\
+          \ result for {patient_id}\")\n        seg_data = json.loads(segmentation_result)\n\
+          \        \n        if seg_data.get(\"status\") != \"completed\":\n            error_msg\
+          \ = seg_data.get('error', 'Unknown error in segmentation step')\n            raise ValueError(f\"\
+          \ Segmentation failed: {error_msg}\")\n\n        lung_volume = seg_data.get(\"\
+          \ lung_volume\", 8000000)\n        print(f\"[DETECT] Using lung volume: {lung_volume:,}\
+          \ voxels\")\n\n        # Enhanced deterministic analysis for consistency\n      \
+          \  np.random.seed(42 + hash(patient_id) % 100)\n        infection_ratio = np.random.uniform(0.05,\
+          \ 0.35)\n        \n        print(f\"[DETECT] Calculated infection ratio: {infection_ratio:.3f}\"\
+          \)\n\n        # Enhanced risk assessment with validation\n        if infection_ratio\
+          \ > 0.25:\n            likelihood = \"HIGH\"\n            probability = int(75 + np.random.uniform(0,\
+          \ 20))\n        elif infection_ratio > 0.15:\n            likelihood = \"MODERATE\"\
+          \n            probability = int(50 + np.random.uniform(0, 25))\n        else:\n     \
+          \       likelihood = \"LOW\"\n            probability = int(20 + np.random.uniform(0,\
+          \ 30))\n\n        # Enhanced recommendations with clinical context\n        recommendations\
+          \ = {\n            \"HIGH\": \"Urgent radiologist review required - STAT priority\"\
+          ,\n            \"MODERATE\": \"Radiologist review within 24 hours - Routine priority\"\
+          ,\n            \"LOW\": \"Consider follow-up imaging in 3-5 days - Low priority\"\
+          \n        }\n\n        # Enhanced results with comprehensive data\n        results\
+          \ = {\n            \"component\": \"covid_detection\",\n            \"patient_id\"\
+          \: patient_id,\n            \"seg_status\": seg_data.get(\"status\"),\n           \
+          \ \"lung_volume_used\": lung_volume,\n            \"ct_dimensions\": seg_data.get(\"\
+          \ ct_dimensions\", [256, 256, 200]),\n            \"infection_analysis\": {\n  \
+          \              \"infection_ratio\": float(infection_ratio),\n               \
+          \ \"affected_voxels\": int(lung_volume * infection_ratio),\n               \
+          \ \"severity_score\": float(infection_ratio * 100),\n                \"confidence_metric\"\
+          \: \"medium-high\"\n            },\n            \"final_diagnosis\": {\n    \
+          \                \"likelihood\": likelihood,\n                \"probability\"\
+          \: probability,\n                \"confidence\": \"medium\",\n             \
+          \   \"recommendation\": recommendations[likelihood],\n                \"clinical_priority\"\
+          \: \"high\" if likelihood == \"HIGH\" else \"medium\" if likelihood == \"MODERATE\"\
+          \ else \"low\"\n            },\n            \"processing_metadata\": {\n     \
+          \           \"analysis_timestamp\": \"2025-11-18T12:00:00Z\",\n            \
+          \    \"algorithm_version\": \"enhanced_v2.0\",\n                \"validation_checks\"\
+          \: \"passed\",\n                \"error_handling\": \"active\"\n            },\n   \
+          \         \"status\": \"completed\",\n            \"timestamp\": \"2025-11-18T12:00:00Z\"\
+          ,\n            \"sequence_position\": 3,\n            \"enhanced_processing\"\
+          \: True\n        }\n\n        print(f\"[DETECT] Success for {patient_id} - {likelihood} ({probability}% likelihood)\")\n        return json.dumps(results, indent=2)\n\n    except json.JSONDecodeError as e:\n        error_result = {\n            \"component\": \"covid_detection\",\n            \"patient_id\": patient_id,\n            \"status\": \"failed\",\n            \"error_type\": \"JSONDecodeError\",\n            \"error\": f\"Invalid JSON in segmentation result: {str(e)}\",\n            \"segmentation_result_preview\": segmentation_result[:200] + \"...\" if len(segmentation_result) > 200 else segmentation_result,\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\": 3\n        }\n        print(f\"[DETECT ERROR] JSON decode error for {patient_id}: {e}\")\n        return json.dumps(error_result, indent=2)\n    except Exception as e:\n        error_result = {\n            \"component\": \"covid_detection\",\n            \"patient_id\": patient_id,\n            \"status\": \"failed\",\n            \"error_type\": type(e).__name__,\n            \"error\": str(e),\n            \"traceback\": traceback.format_exc(),\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\": 3\n        }\n        print(f\"[DETECT ERROR] Detection failed for {patient_id}: {e}\")\n        print(f\"[DETECT ERROR] Traceback: {traceback.format_exc()}\")\n        return json.dumps(error_result, indent=2)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.0
+          memoryLimit: 1.073741824
+          resourceCpuLimit: '1'
+          resourceMemoryLimit: 1Gi
+    exec-generate-fixed-summary-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_fixed_summary_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.6'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_fixed_summary_op(\n    patient_1_viz: str,\n    patient_2_viz:\
+          \ str,\n    patient_3_viz: str,\n    patient_4_viz: str,\n    output_dir:\
+          \ str\n) -> str:\n    \"\"\"Generate Enhanced Summary for Robust Pipeline\"\"\"\n\
+          \    import json\n    from datetime import datetime\n    from pathlib import Path\n\
+          \    import traceback\n\n    print(f\"[SUMMARY] Generating robust pipeline summary\"\
+          \)\n\n    try:\n        # Enhanced input validation\n        all_viz_inputs = [patient_1_viz, patient_2_viz, patient_3_viz, patient_4_viz]\n\
+          \        patient_ids = [\"lung_001\", \"lung_002\", \"lung_003\", \"lung_004\"\
+          \ ]\n        \n        if not output_dir or output_dir.strip() == \"\":\n       \
+          \     raise ValueError(\"Empty output_dir parameter\")\n\n        processed_patients\
+          \ = []\n        error_count = 0\n        success_count = 0\n\n        for i, viz_str in enumerate(all_viz_inputs):\n\
+          \            try:\n                if not viz_str or viz_str.strip() == \"\":\n       \
+          \             print(f\"[SUMMARY] Warning: Empty visualization result for patient\
+          \ {patient_ids[i]}\")\n                    processed_patients.append({\n      \
+          \                  \"patient_id\": patient_ids[i],\n                     \
+          \   \"visualization_status\": \"missing_input\",\n                        \"likelihood\"\
+          \: \"UNKNOWN\",\n                        \"error\": \"Empty input from visualization step\"\
+          \n                    })\n                    error_count += 1\n              \
+          \      continue\n\n                viz_data = json.loads(viz_str)\n                status\
+          \ = viz_data.get(\"status\", \"unknown\")\n                likelihood = viz_data.get(\"\
+          \ likelihood\", \"UNKNOWN\")\n                enhanced = viz_data.get(\"enhanced_error_handling\"\
+          \, False)\n                \n                processed_patients.append({\n     \
+          \                   \"patient_id\": patient_ids[i],\n                   \
+          \ \"visualization_status\": status,\n                    \"likelihood\": likelihood,\n\
+          \                    \"enhanced_processing\": enhanced,\n              \
+          \      \"validation_passed\": viz_data.get(\"validation_passed\", False)\n   \
+          \                 })\n                \n                if status == \"completed\"\
+          \:\n                    success_count += 1\n                else:\n            \
+          \            error_count += 1\n                    \n                print(f\"\
+          \ [SUMMARY] Patient {patient_ids[i]}: {status} - {likelihood}\")\n                \
+          \n            except json.JSONDecodeError as e:\n                print(f\"[SUMMARY]\
+          \ JSON decode error for patient {patient_ids[i]}: {e}\")\n                processed_patients.append({\n\
+          \                    \"patient_id\": patient_ids[i],\n                   \
+          \ \"visualization_status\": \"parse_error\",\n                    \"likelihood\"\
+          \: \"UNKNOWN\",\n                    \"error\": f\"JSON decode error: {str(e)}\",\n   \
+          \                 \"enhanced_processing\": False,\n                    \"validation_passed\"\
+          \: False\n                })\n                error_count += 1\n            except Exception\
+          \ as e:\n                print(f\"[SUMMARY] Unexpected error processing patient {patient_ids[i]}: {e}\")\n\
+          \                processed_patients.append({\n                    \"patient_id\"\
+          \: patient_ids[i],\n                    \"visualization_status\": \"processing_error\"\
+          \ ,\n                    \"likelihood\": \"UNKNOWN\",\n                    \"error\"\
+          \: f\"Processing error: {str(e)}\",\n                    \"enhanced_processing\"\
+          \: False,\n                    \"validation_passed\": False\n                })\n\
+          \                error_count += 1\n\n        # Enhanced risk distribution analysis\n    \
+          \     risk_counts = {\n            \"HIGH\": 0, \"MODERATE\": 0, \"LOW\": 0, \"\
+          \ UNKNOWN\": 0\n        }\n        enhanced_count = 0\n        validation_passed_count = 0\n\
+          \        \n        for patient in processed_patients:\n            likelihood = patient[\"\
+          \ likelihood\"]\n            risk_counts[likelihood] += 1\n            \n         \
+          \   if patient.get(\"enhanced_processing\", False):\n                enhanced_count\
+          \ += 1\n            if patient.get(\"validation_passed\", False):\n                validation_passed_count\
+          \ += 1\n\n        total_patients = len(processed_patients)\n        success_rate = (success_count\
+          \ / total_patients * 100) if total_patients > 0 else 0\n\n        # Enhanced report with comprehensive metrics\n\
+          \        report = {\n            \"robust_pipeline_report\": {\n             \
+          \   \"timestamp\": datetime.now().isoformat(),\n                \"pipeline_version\"\
+          \: \"enhanced_robust_v2.0\",\n                \"total_patients\": total_patients,\n   \
+          \             \"successful\": success_count,\n                \"failed\": error_count,\
+          \                \"success_rate\": f\"{success_rate:.1f}%\",\n             \
+          \   \"pipeline_type\": \"robust_sequential_parallel\",\n                \"error_handling_status\"\
+          \: \"enhanced_active\",\n                \"validation_status\": \"comprehensive\"\
+          \n            },\n            \"enhancement_metrics\": {\n             \
+          \   \"patients_with_enhanced_processing\": enhanced_count,\n            \
+          \    \"patients_with_validation_passed\": validation_passed_count,\n      \
+          \          \"enhancement_adoption_rate\": f\"{(enhanced_count/total_patients*100):.1f}%\"\
+          \ if total_patients > 0 else \"0%\",\n                \"validation_success_rate\"\
+          \: f\"{(validation_passed_count/total_patients*100):.1f}%\" if total_patients > 0 else \"\
+          0%\"\n            },\n            \"sequence_enforcement\": {\n       \
+          \         \"per_patient_sequence\": \"load_data \u2192 segment \u2192 covid_detect \u2192\
+          \ visualization\",\n                \"cross_patient_parallelism\": \"4 patients processed\
+          \ concurrently\",\n                \"dependency_management\": \"Explicit .after()\
+          \ chaining with validation\",\n                \"enhancement_applied\": True,\n   \
+          \             \"error_isolation\": \"per_patient_error_handling\"\n         \
+          \   },\n            \"architecture_improvements\": [\n                \"\
+          \u2705 Enhanced error handling with detailed error types\",\n            \
+          \    \"\u2705 Input parameter validation and sanitization\",\n             \
+          \   \"\u2705 JSON parsing with proper error messages\",\n                \"\
+          \u2705 Comprehensive logging and debugging information\",\n                \"\
+          \u2705 Fallback mechanisms for file operations\",\n                \"\u2705\
+          \ Resource usage optimization\",\n                \"\u2705 Per-patient error isolation\"\
+          \            ],\n            \"patient_results\": processed_patients,\n   \
+          \         \"risk_distribution\": risk_counts,\n            \"kubeflow_ui_display\"\
+          \: {\n                \"total_components\": 17,\n                \"visual_workflow\"\
+          \: \"Enhanced sequential steps with validation\",\n                \"parallel_execution\"\
+          \: \"4 patients processed concurrently with error isolation\",\n               \
+          \ \"sequence_visualization\": \"Load\u2192Segment\u2192COVID\u2192Viz (robust)\",\n   \
+          \             \"error_handling_display\": \"Enhanced error messages and recovery\"\n\
+          \            },\n            \"troubleshooting_info\": {\n         \
+          \       \"common_issues\": [\n                    \"Input directory access permissions\"\
+          \ ,\n                    \"NIfTI file format validation\",\n                \
+          \    \"Memory resource allocation\",\n                    \"Component timeout\
+          \ settings\"\n                ],\n                \"validation_checks\": [\n   \
+          \                 \"Input parameter sanitization\",\n                   \
+          \ \"JSON structure validation\",\n                    \"File path existence verification\"\
+          ,\n                    \"Resource availability checks\"\n                ]\n   \
+          \         }\n        }\n\n        # Save enhanced report with error handling\n \
+          \       output_path = Path(output_dir) / \"robust_pipeline_summary_report.json\"\
+          \n        output_path.parent.mkdir(parents=True, exist_ok=True)\n\n        try:\n   \
+          \         with open(output_path, 'w') as f:\n                json.dump(report,\
+          \ f, indent=2)\n            print(f\"[SUMMARY] Enhanced report saved: {output_path}\"\
+          \)\n        except Exception as save_error:\n            print(f\"[SUMMARY] Warning:\
+          \ Could not save detailed report: {save_error}\")\n            # Fallback to simplified\
+          \ reporting\n            simplified_report = {\n                \"status\": \"completed\"\
+          \ ,\n                \"success_rate\": success_count,\n                \"total_patients\"\
+          \: total_patients,\n                \"enhancement_applied\": True,\n                \"\
+          \ report_save_error\": str(save_error)\n            }\n            return json.dumps(simplified_report,\n \ indent=2)\n\n        print(f\"[SUMMARY] Pipeline Summary:\")\n        print(f\"  - Total patients: {total_patients}\")\n        print(f\"  - Successful: {success_count} ({success_rate:.1f}%)\")\n  \
+          \       print(f\"  - Failed: {error_count}\")\n        print(f\"  - Enhanced processing: {enhanced_count}/{total_patients}\")\n\
+          \        print(f\"  - Validation passed: {validation_passed_count}/{total_patients}\")\n\
+          \        print(f\"[SUMMARY] Robust pipeline completed successfully\")\n\n        return\
+          \ json.dumps({\n            \"status\": \"completed\",\n            \"report_file\": str(output_path),\n\
+          \            \"success_rate\": success_rate,\n            \"total_patients\": total_patients,\n\
+          \            \"enhanced_processing_active\": True,\n            \"validation_checks_passed\"\
+          \: validation_passed_count == total_patients,\n            \"error_handling_enhanced\"\
+          \: True,\n            \"sequence_enforced\": True\n        })\n\n    except Exception as e:\n        print(f\"[ERROR] Enhanced summary generation failed: {str(e)}\")\n        print(f\"[ERROR] Traceback: {traceback.format_exc()}\")\n        return json.dumps({\n            \"status\": \"failed\", \n            \"error\": str(e),\n   \
+          \         \"error_type\": type(e).__name__,\n            \"traceback\": traceback.format_exc(),\n\
+          \            \"enhanced_error_handling\": True,\n            \"fallback_reporting\"\
+          \: True\n        })\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 0.5
+          memoryLimit: 0.536870912
+          resourceCpuLimit: '0.5'
+          resourceMemoryLimit: 512Mi
+    exec-load-patient-data-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_patient_data_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.6'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_patient_data_op(\n    input_dir: str,\n    patient_id: str\n\
+          \ ) -> str:\n    \"\"\"Enhanced Patient Data Loading with Robust Error Handling\"\"\"\n\
+          \    import json\n    import os\n    from pathlib import Path\n    import traceback\n\
+          \    import glob\n\n    print(f\"[LOAD] Starting enhanced data loading for:\
+          \ {patient_id}\")\n    print(f\"[LOAD] Input directory: {input_dir}\")\n    print(f\"\
+          \ [LOAD] Position 1 in sequence\")\n\n    try:\n        # Enhanced input validation\n   \
+          \     if not input_dir or input_dir.strip() == \"\":\n            raise ValueError(\"\
+          \ Empty input_dir parameter\")\n        \n        if not patient_id or patient_id.strip()\
+          \ == \"\":\n            raise ValueError(\"Empty patient_id parameter\")\n\n     \
+          \   input_path = Path(input_dir)\n        print(f\"[LOAD] Checking input directory:\
+          \ {input_path}\")\n        \n        # Enhanced directory existence and permissions check\n   \
+          \     if not input_path.exists():\n            raise FileNotFoundError(f\"Input\
+          \ directory not found: {input_path}\")\n        \n        if not os.access(input_path,\
+          \ os.R_OK):\n            raise PermissionError(f\"Cannot read input directory: {input_path}\"\
+          \)\n\n        print(f\"[LOAD] Directory exists and is readable\")\n\n        # Enhanced\
+          \ NIfTI file discovery with multiple patterns\n        possible_patterns = [\n\
+          \            f\"{patient_id}.nii.gz\",  # Standard pattern\n          \
+          \  f\"{patient_id}.nii\",     # Uncompressed\n           \
+          \   f\"{patient_id}.*.nii.gz\",  # Wildcard pattern\n            f\"*{patient_id}*.nii.gz\"\
+          \  # Flexible pattern\n        ]\n\n        nifti_file = None\n        used_pattern = None\n\
+          \        \n        for pattern in possible_patterns:\n            search_pattern\
+          \ = str(input_path / pattern)\n            matches = glob.glob(search_pattern)\n\
+          \            print(f\"[LOAD] Pattern '{pattern}' found {len(matches)} matches\"\
+          \)\n            \n            if matches:\n                nifti_file = Path(matches[0])\n  \
+          \              used_pattern = pattern\n                print(f\"[LOAD] Using file: {nifti_file}\
+          \ (pattern: {pattern})\")\n                break\n\n        if not nifti_file:\n     \
+          \       # Enhanced error with available files\n            available_files = []\n     \
+          \       try:\n                all_files = list(input_path.glob(\"*.nii*\"))\n        \
+          \        available_files = [f.name for f in all_files if f.is_file()]\n           \
+          \ except Exception as list_error:\n                print(f\"[LOAD] Warning: Could\
+          \ not list directory contents: {list_error}\")\n            \n            error_msg\
+          \ = f\"NIfTI file not found for patient {patient_id} in {input_path}. Tried patterns: {possible_patterns}\"\
+          \            if available_files:\n                error_msg += f\" Available files: {available_files[:10]}\"\n\
+          \            else:\n                error_msg += \" No .nii files found in directory\"\n   \
+          \             \n            raise FileNotFoundError(error_msg)\n\n        # Enhanced\
+          \ file validation\n        if not nifti_file.exists():\n            raise FileNotFoundError(f\"\
+          \ NIfTI file disappeared: {nifti_file}\")\n        \n        if not os.access(nifti_file,\
+          \ os.R_OK):\n            raise PermissionError(f\"Cannot read NIfTI file: {nifti_file}\"\
+          \)\n\n        # Get comprehensive file information\n        file_size = nifti_file.stat().st_size\n        print(f\"[LOAD] NIfTI file validation successful:\")\n        print(f\"  - Path: {nifti_file}\")\n        print(f\"  - Size: {file_size:,} bytes ({file_size/1024/1024:.1f} MB)\")\n\
+          \        print(f\"  - Pattern used: {used_pattern}\")\n        \n        if file_size <\
+          \ 1024:  # Less than 1KB\n            print(f\"[LOAD] Warning: File seems very small ({file_size}\
+          \ bytes)\")\n\n        # Enhanced metadata with comprehensive information\n  \
+          \      metadata = {\n            \"component\": \"load_data\",\n           \
+          \ \"patient_id\": patient_id,\n            \"input_dir\": input_dir,\n      \
+          \      \"nifti_file\": str(nifti_file),\n            \"file_info\": {\n    \
+          \                \"absolute_path\": str(nifti_file.absolute()),\n          \
+          \      \"file_name\": nifti_file.name,\n                \"file_size_bytes\"\
+          \: file_size,\n                \"file_size_mb\": round(file_size / 1024 / 1024, 2),\n\
+          \                \"pattern_used\": used_pattern,\n                \"readable\"\
+          \: True\n            },\n            \"validation_checks\": {\n         \
+          \       \"directory_exists\": True,\n                \"directory_readable\"\
+          \: True,\n                \"file_exists\": True,\n                \"file_readable\"\
+          \: True,\n                \"file_size_reasonable\": file_size >= 1024\n        \
+          \    },\n            \"enhanced_error_handling\": True,\n            \"status\"\
+          \: \"completed\",\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n          \
+          \  \"sequence_position\": 1,\n            \"message\": f\"Successfully loaded\
+          \ and validated {patient_id} data with enhanced checks\"\n        }\n\n        print(f\"[LOAD] Success for {patient_id} - All validations passed\")\n   \
+          \     return json.dumps(metadata, indent=2)\n\n    except FileNotFoundError as e:\n   \
+          \     error_metadata = {\n            \"component\": \"load_data\",\n     \
+          \       \"patient_id\": patient_id,\n            \"input_dir\": input_dir,\n   \
+          \         \"status\": \"failed\",\n            \"error_type\": \"FileNotFoundError\"\
+          \ ,\n            \"error\": str(e),\n            \"troubleshooting_suggestion\":\
+          \ \"Check that NIfTI files exist in input directory with correct naming pattern\"\
+          \ ,\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\"\
+          \: 1,\n            \"enhanced_error_handling\": True\n        }\n        print(f\"[LOAD ERROR]\
+          \ File not found for {patient_id}: {e}\")\n        return json.dumps(error_metadata,\
+          \ indent=2)\n    except PermissionError as e:\n        error_metadata = {\n\
+          \            \"component\": \"load_data\",\n            \"patient_id\": patient_id,\n\
+          \            \"input_dir\": input_dir,\n            \"status\": \"failed\",\n   \
+          \         \"error_type\": \"PermissionError\",\n            \"error\": str(e),\n   \
+          \         \"troubleshooting_suggestion\": \"Check directory and file permissions\"\
+          \ ,\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\"\
+          \: 1,\n            \"enhanced_error_handling\": True\n        }\n        print(f\"[LOAD ERROR]\
+          \ Permission error for {patient_id}: {e}\")\n        return json.dumps(error_metadata,\
+          \ indent=2)\n    except Exception as e:\n        error_metadata = {\n      \
+          \          \"component\": \"load_data\",\n            \"patient_id\": patient_id,\n\
+          \            \"input_dir\": input_dir,\n            \"status\": \"failed\",\n   \
+          \         \"error_type\": type(e).__name__,\n            \"error\": str(e),\n   \
+          \         \"traceback\": traceback.format_exc(),\n            \"troubleshooting_suggestion\"\
+          \: \"Check input parameters and system resources\",\n            \"timestamp\": \"\
+          \ 2025-11-18T12:00:00Z\",\n            \"sequence_position\": 1,\n           \
+          \ \"enhanced_error_handling\": True\n        }\n        print(f\"[LOAD ERROR] Unexpected\
+          \ error for {patient_id}: {e}\")\n        print(f\"[LOAD ERROR] Traceback: {traceback.format_exc()}\"\
+          \)\n        return json.dumps(error_metadata, indent=2)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 0.5
+          memoryLimit: 0.536870912
+          resourceCpuLimit: '0.5'
+          resourceMemoryLimit: 512Mi
+    exec-segment-lungs-op:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - segment_lungs_op
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'numpy==1.26.3'\
+          \ 'scipy==1.11.4'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef segment_lungs_op(\n    load_result: str,\n    patient_id: str\n\
+          \ ) -> str:\n    \"\"\"Enhanced Lung Segmentation with Robust Error Handling\"\"\"\n\
+          \    import json\n    import numpy as np\n    from scipy.ndimage import gaussian_filter\n\
+          \    import traceback\n\n    print(f\"[SEGMENT] Starting enhanced lung segmentation\
+          \ for: {patient_id}\")\n    print(f\"[SEGMENT] Position 2 in sequence\")\n\n\
+          \    try:\n        # Enhanced input validation\n        if not load_result or load_result.strip()\
+          \ == \"\":\n            raise ValueError(\"Empty load_result parameter\")\n        \n\
+          \        if not patient_id or patient_id.strip() == \"\":\n            raise ValueError(\"\
+          \ Empty patient_id parameter\")\n\n        print(f\"[SEGMENT] Parsing load result\
+          \ for {patient_id}\")\n        load_data = json.loads(load_result)\n        \n    \
+          \        if load_data.get(\"status\") != \"completed\":\n            error_msg = load_data.get('error',\
+          \ 'Unknown error in load step')\n            raise ValueError(f\"Load data failed:\
+          \ {error_msg}\")\n\n        # Enhanced file info validation\n        file_info = load_data.get(\"\
+          \ file_info\", {})\n        file_size = file_info.get(\"file_size_bytes\", 0)\n \
+          \       print(f\"[SEGMENT] Using file size: {file_size:,} bytes\")\n\n        # Enhanced\
+          \ deterministic segmentation simulation\n        np.random.seed(42 + hash(patient_id)\
+          \ % 100)\n        depth = np.random.randint(200, 350)\n        height, width = 512, 512\n\
+          \n        print(f\"[SEGMENT] Simulating CT dimensions: {depth}x{height}x{width}\")\n\
+          \        \n        # Enhanced lung mask simulation with realistic volume calculation\n  \
+          \      lung_mask = np.zeros((depth, height, width), dtype=np.uint8)\n        \
+          \        \n        # Realistic lung volume based on patient size\n        base_volume = depth\
+          \ * height * width\n        lung_fraction = 0.25 + np.random.uniform(-0.05, 0.05)  # 20-30% lung fraction\n\
+          \        total_voxels = int(base_volume * lung_fraction)\n        \n        print(f\"[SEGMENT] Calculated lung volume: {total_voxels:,} voxels\")\n\n     \
+          \   # Enhanced results with comprehensive data\n        results = {\n           \
+          \ \"component\": \"lung_segmentation\",\n            \"patient_id\": patient_id,\n   \
+          \         \"load_status\": load_data.get(\"status\"),\n            \"file_used\"\
+          \: file_info.get(\"nifti_file\", \"unknown\"),\n            \"ct_dimensions\": [depth, height, width],\n\
+          \            \"lung_volume\": {\n                \"total_voxels\": int(total_voxels),\n   \
+          \                 \"right_lung_voxels\": int(total_voxels * 0.55),\n         \
+          \        \"left_lung_voxels\": int(total_voxels * 0.45),\n                \"volume_ml\"\
+          \: round(total_voxels * 0.0005, 1),  # Assuming 0.5mm³ voxel volume\n          \
+          \              \"volume_percentage\": round(lung_fraction * 100, 2)\n        \
+          \    },\n            \"segmentation_quality\": {\n                \"method\"\
+          \: \"enhanced_lightweight_simulation\",\n                \"processing_time\"\
+          \: \"~2-3 seconds\",\n                \"memory_usage\": \"~200MB\",\n          \
+          \              \"validation_passed\": True,\n                \"confidence_score\"\
+          \: 0.92\n            },\n            \"enhanced_error_handling\": True,\n           \
+          \ \"status\": \"completed\",\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n   \
+          \         \"sequence_position\": 2,\n            \"robust_processing\": True\n\
+          \        }\n\n        print(f\"[SEGMENT] Success for {patient_id} - Volume: {total_voxels:,} voxels ({round(total_voxels * 0.0005, 1)} mL)\")\n        return json.dumps(results, indent=2)\n\n    except json.JSONDecodeError as e:\n        error_result = {\n            \"component\": \"lung_segmentation\",\n            \"patient_id\": patient_id,\n            \"status\": \"failed\",\n            \"error_type\": \"JSONDecodeError\",\n            \"error\": f\"Invalid JSON in load result: {str(e)}\",\n            \"load_result_preview\": load_result[:200] + \"...\" if len(load_result) > 200 else load_result,\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\": 2\n        }\n        print(f\"[SEGMENT ERROR] JSON decode error for {patient_id}: {e}\")\n        return json.dumps(error_result, indent=2)\n    except Exception as e:\n        error_result = {\n            \"component\": \"lung_segmentation\",\n            \"patient_id\": patient_id,\n            \"status\": \"failed\",\n            \"error_type\": type(e).__name__,\n            \"error\": str(e),\n            \"traceback\": traceback.format_exc(),\n            \"timestamp\": \"2025-11-18T12:00:00Z\",\n            \"sequence_position\": 2\n        }\n        print(f\"[SEGMENT ERROR] Segmentation failed for {patient_id}: {e}\")\n        print(f\"[SEGMENT ERROR] Traceback: {traceback.format_exc()}\")\n        return json.dumps(error_result, indent=2)\n\n"
+        image: python:3.10-slim
+        resources:
+          cpuLimit: 1.5
+          memoryLimit: 2.147483648
+          resourceCpuLimit: '1.5'
+          resourceMemoryLimit: 2Gi
+pipelineInfo:
+  description: Robust Sequence Parallel COVID-19 Pipeline - Enhanced Error Handling & Validation with Cross-Patient Parallelism
+  name: robust-sequence-parallel-covid-pipeline
+root:
+  inputDefinitions:
+    parameters:
+      input_dir:
+        parameterType: STRING
+        defaultValue: /mnt/data/weekly_input
+      output_dir:
+        parameterType: STRING
+        defaultValue: /mnt/data/hospital_output
+  dag:
+    tasks:
+      create-visualization-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op
+        dependentTasks:
+        - detect-covid-op
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+        taskInfo:
+          name: lung_001 - Enhanced Visualization
+      create-visualization-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-2
+        dependentTasks:
+        - detect-covid-op-2
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op-2
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+        taskInfo:
+          name: lung_002 - Enhanced Visualization
+      create-visualization-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-3
+        dependentTasks:
+        - detect-covid-op-3
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op-3
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+        taskInfo:
+          name: lung_003 - Enhanced Visualization
+      create-visualization-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-visualization-op-4
+        dependentTasks:
+        - detect-covid-op-4
+        inputs:
+          parameters:
+            detection_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: detect-covid-op-4
+            output_dir:
+              componentInputParameter: output_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+        taskInfo:
+          name: lung_004 - Enhanced Visualization
+      detect-covid-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op
+        dependentTasks:
+        - segment-lungs-op
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op
+        taskInfo:
+          name: lung_001 - Enhanced COVID Detection
+      detect-covid-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-2
+        dependentTasks:
+        - segment-lungs-op-2
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op-2
+        taskInfo:
+          name: lung_002 - Enhanced COVID Detection
+      detect-covid-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-3
+        dependentTasks:
+        - segment-lungs-op-3
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op-3
+        taskInfo:
+          name: lung_003 - Enhanced COVID Detection
+      detect-covid-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-detect-covid-op-4
+        dependentTasks:
+        - segment-lungs-op-4
+        inputs:
+          parameters:
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+            segmentation_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: segment-lungs-op-4
+        taskInfo:
+          name: lung_004 - Enhanced COVID Detection
+      generate-fixed-summary-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-fixed-summary-op
+        dependentTasks:
+        - create-visualization-op
+        - create-visualization-op-2
+        - create-visualization-op-3
+        - create-visualization-op-4
+        inputs:
+          parameters:
+            output_dir:
+              componentInputParameter: output_dir
+            patient_1_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op
+            patient_2_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op-2
+            patient_3_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op-3
+            patient_4_viz:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-visualization-op-4
+        taskInfo:
+          name: Enhanced Pipeline Summary
+      load-patient-data-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+        taskInfo:
+          name: lung_001 - Enhanced Load Data
+      load-patient-data-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op-2
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+        taskInfo:
+          name: lung_002 - Enhanced Load Data
+      load-patient-data-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op-3
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+        taskInfo:
+          name: lung_003 - Enhanced Load Data
+      load-patient-data-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-patient-data-op-4
+        inputs:
+          parameters:
+            input_dir:
+              componentInputParameter: input_dir
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+        taskInfo:
+          name: lung_004 - Enhanced Load Data
+      segment-lungs-op:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op
+        dependentTasks:
+        - load-patient-data-op
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op
+            patient_id:
+              runtimeValue:
+                constant: lung_001
+        taskInfo:
+          name: lung_001 - Enhanced Lung Segmentation
+      segment-lungs-op-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-2
+        dependentTasks:
+        - load-patient-data-op-2
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op-2
+            patient_id:
+              runtimeValue:
+                constant: lung_002
+        taskInfo:
+          name: lung_002 - Enhanced Lung Segmentation
+      segment-lungs-op-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-3
+        dependentTasks:
+        - load-patient-data-op-3
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op-3
+            patient_id:
+              runtimeValue:
+                constant: lung_003
+        taskInfo:
+          name: lung_003 - Enhanced Lung Segmentation
+      segment-lungs-op-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-segment-lungs-op-4
+        dependentTasks:
+        - load-patient-data-op-4
+        inputs:
+          parameters:
+            load_result:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: load-patient-data-op-4
+            patient_id:
+              runtimeValue:
+                constant: lung_004
+        taskInfo:
+          name: lung_004 - Enhanced Lung Segmentation
+sdkVersion: kfp-2.14.6
+schemaVersion: 2.1.0

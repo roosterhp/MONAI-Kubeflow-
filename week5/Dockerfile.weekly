@@ -1,0 +1,36 @@
+# Weekly COVID-19 Detection Pipeline Dockerfile
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY config/requirements.txt .
+COPY weekly_pipeline_requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r weekly_pipeline_requirements.txt
+
+# Install lungmask from source
+RUN pip install git+https://github.com/JoHof/lungmask.git
+
+# Copy application code
+COPY simple_data_loader.py .
+COPY components/ ./components/
+COPY config/ ./config/
+
+# Create necessary directories
+RUN mkdir -p /mnt/data/weekly_input /mnt/data/working /mnt/data/hospital_output
+
+# Set permissions
+RUN chmod +x simple_data_loader.py
+
+# Default command
+CMD ["python", "--version"]

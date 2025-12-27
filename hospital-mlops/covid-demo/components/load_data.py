@@ -1,7 +1,7 @@
 """
 Load Data Component: Copy patient CT scan to pipeline input
-Source: /mnt/data/test_data/Task06_Lung/imagesTr/lung_XXX.nii.gz
-Target: /mnt/data/covid_inputs/week_current/{patient_id}/imaging.nii.gz
+Source: test_data/Task06_Lung/imagesTr/lung_XXX.nii.gz
+Target: covid_inputs/week_current/{patient_id}/imaging.nii.gz
 """
 
 import sys
@@ -9,6 +9,7 @@ import shutil
 from pathlib import Path
 import SimpleITK as sitk
 import nibabel as nib
+from path_utils import get_data_path
 
 
 def load_data(patient_id: str):
@@ -19,11 +20,12 @@ def load_data(patient_id: str):
 
     try:
         # Locate source: support multiple common input locations on the PVC
+        base_path = get_data_path()
         source_candidates = [
-            Path(f"/mnt/data/test_data/Task06_Lung/imagesTr/{patient_id}.nii.gz"),
-            Path(f"/mnt/data/input/{patient_id}.nii.gz"),
-            Path(f"/mnt/data/input/{patient_id}/imaging.nii.gz"),
-            Path(f"/mnt/data/input/{patient_id}/{patient_id}.nii.gz"),
+            base_path / f"test_data/Task06_Lung/imagesTr/{patient_id}.nii.gz",
+            base_path / f"input/{patient_id}.nii.gz",
+            base_path / f"input/{patient_id}/imaging.nii.gz",
+            base_path / f"input/{patient_id}/{patient_id}.nii.gz",
         ]
         source_file = None
         for cand in source_candidates:
@@ -32,7 +34,7 @@ def load_data(patient_id: str):
                 break
 
         # Target: COVID pipeline input directory
-        target_dir = Path(f"/mnt/data/covid_inputs/week_current/{patient_id}")
+        target_dir = base_path / f"covid_inputs/week_current/{patient_id}"
         target_file = target_dir / "imaging.nii.gz"
 
         print("Source candidates:")
@@ -42,10 +44,10 @@ def load_data(patient_id: str):
         if source_file is None:
             raise FileNotFoundError(
                 "No input found for {}. Place one of:".format(patient_id)
-                + f"\n  - /mnt/data/test_data/Task06_Lung/imagesTr/{patient_id}.nii.gz"
-                + f"\n  - /mnt/data/input/{patient_id}.nii.gz"
-                + f"\n  - /mnt/data/input/{patient_id}/imaging.nii.gz"
-                + f"\n  - /mnt/data/input/{patient_id}/{patient_id}.nii.gz"
+                + f"\n  - {base_path}/test_data/Task06_Lung/imagesTr/{patient_id}.nii.gz"
+                + f"\n  - {base_path}/input/{patient_id}.nii.gz"
+                + f"\n  - {base_path}/input/{patient_id}/imaging.nii.gz"
+                + f"\n  - {base_path}/input/{patient_id}/{patient_id}.nii.gz"
             )
 
         print(f"Selected source: {source_file}")

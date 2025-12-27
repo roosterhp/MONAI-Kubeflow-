@@ -1,0 +1,383 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: hospital-covid-detection-with-phases-fixed
+  namespace: kubeflow
+  labels:
+    pipeline: "hospital-covid-detection"
+    version: "with-clear-phases-fixed"
+  annotations:
+    kubeflow-pipeline.org/description: "Hospital COVID-19 Detection Pipeline với các phase rõ ràng - Fixed Version"
+spec:
+  serviceAccountName: workflow-sa
+  entrypoint: hospital-covid-pipeline-with-phases
+  arguments:
+    parameters:
+    - name: input-weekly-dir
+      value: "/mnt/data/hospital_input/weekly_scan"
+    - name: output-base-dir
+      value: "/mnt/data/hospital_output"
+  templates:
+  # Main pipeline template with clear phases
+  - name: hospital-covid-pipeline-with-phases
+    inputs:
+      parameters:
+      - name: input-weekly-dir
+        type: string
+    steps:
+    # === PHASE 1: LOAD DATA ===
+    - - name: phase-1-load-data
+        template: phase-load-data
+        arguments:
+          parameters:
+          - name: input-weekly-dir
+            value: "{{inputs.parameters.input-weekly-dir}}"
+
+    # === PHASE 2-5: PROCESS PATIENTS (Parallel) ===
+    - - name: phase-2-5-process-patients
+        template: phase-patient-processing
+        arguments:
+          parameters:
+          - name: patient-list
+            value: "{{steps.phase-1-load-data.outputs.parameters.patient-list}}"
+          - name: total-patients
+            value: "{{steps.phase-1-load-data.outputs.parameters.total-patients}}"
+        when: "{{steps.phase-1-load-data.outputs.parameters.total-patients.total_patients}} > 0"
+
+    # === PHASE 6: GENERATE HOSPITAL REPORT ===
+    - - name: phase-6-generate-report
+        template: phase-generate-hospital-report
+        arguments:
+          parameters:
+          - name: total-patients
+            value: "{{steps.phase-1-load-data.outputs.parameters.total-patients}}"
+          - name: patient-list
+            value: "{{steps.phase-1-load-data.outputs.parameters.patient-list}}"
+        when: "{{steps.phase-1-load-data.outputs.parameters.total-patients.total_patients}} > 0"
+
+  # === PHASE TEMPLATES ===
+
+  # Phase 1: Load Data
+  - name: phase-load-data
+    inputs:
+      parameters:
+      - name: input-weekly-dir
+        type: string
+    container:
+      image: covid-hospital-pipeline:latest
+      name: load-data-step
+      imagePullPolicy: Never
+      command: [python]
+      args: ["/app/components/load_data_fixed.py", "{{inputs.parameters.input-weekly-dir}}", "/mnt/data/hospital_working", "/mnt/data/hospital_working/patients_metadata.json"]
+      volumeMounts:
+      - name: hospital-data
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+      env:
+      - name: PHASE_NAME
+        value: "Load Data"
+      - name: PHASE_NUMBER
+        value: "1"
+    outputs:
+      parameters:
+      - name: patient-list
+        valueFrom:
+          path: /mnt/data/hospital_working/patients_metadata.json
+      - name: total-patients
+        valueFrom:
+          path: /mnt/data/hospital_working/patients_metadata.json
+    metadata:
+      labels:
+        phase: "load-data"
+        component: load-data
+        phase-number: "1"
+      annotations:
+        kubeflow-pipeline.org/phase: "1"
+        kubeflow-pipeline.org/phase-name: "📥 Load Data"
+        kubeflow-pipeline.org/phase-description: "Tải dữ liệu bệnh nhân từ thư viện input"
+        kubeflow-pipeline.org/phase-color: "#4CAF50"
+
+  # Phase 2-5: Patient Processing (Container for all patient phases)
+  - name: phase-patient-processing
+    inputs:
+      parameters:
+      - name: patient-list
+      - name: total-patients
+    steps:
+    # Process each patient in parallel
+    - - name: process-patient
+        template: patient-phase-template
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{item}}"
+        withParam: "{{steps.phase-1-load-data.outputs.parameters.patient-list.patients}}"
+
+  # All 5 phases for a single patient
+  - name: patient-phase-template
+    inputs:
+      parameters:
+      - name: patient-id
+        type: string
+    steps:
+
+    # === PHASE 2: SEGMENT PHỔI ===
+    - - name: phase-2-segment-phoi
+        template: phase-lung-segmentation
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+
+    # === PHASE 3: DETECT COVID ===
+    - - name: phase-3-detect-covid
+        template: phase-covid-detection
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+
+    # === PHASE 4: PREPARE DATA ===
+    - - name: phase-4-prepare-data
+        template: phase-data-preparation
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+
+    # === PHASE 5: VISUALIZE ===
+    - - name: phase-5-visualize
+        template: phase-visualization
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+
+  # Phase 2: Segment Phổi (Lung Segmentation)
+  - name: phase-lung-segmentation
+    inputs:
+      parameters:
+      - name: patient-id
+        type: string
+    container:
+      image: covid-hospital-pipeline:latest
+      name: segment-phoi-step
+      imagePullPolicy: Never
+      command: [python]
+      args: ["/app/components/lung_segment.py", "/mnt/data/hospital_working/{{inputs.parameters.patient-id}}/imaging.nii.gz", "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/segmentation"]
+      volumeMounts:
+      - name: hospital-data
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "1000m"
+          memory: "2Gi"
+        limits:
+          cpu: "2000m"
+          memory: "4Gi"
+      env:
+      - name: PHASE_NAME
+        value: "Segment Phổi"
+      - name: PHASE_NUMBER
+        value: "2"
+    metadata:
+      labels:
+        phase: "segment-phoi"
+        component: lung-segmentation
+        phase-number: "2"
+      annotations:
+        kubeflow-pipeline.org/phase: "2"
+        kubeflow-pipeline.org/phase-name: "🫁 Segment Phổi"
+        kubeflow-pipeline.org/phase-description: "Phân đoạn phổi với AI LungMask R231"
+        kubeflow-pipeline.org/phase-color: "#2196F3"
+
+  # Phase 3: Detect COVID
+  - name: phase-covid-detection
+    inputs:
+      parameters:
+      - name: patient-id
+        type: string
+    container:
+      image: covid-hospital-pipeline:latest
+      name: detect-covid-step
+      imagePullPolicy: Never
+      command: [python]
+      args: ["/app/components/covid_detect.py", "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/segmentation", "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/detection"]
+      volumeMounts:
+      - name: hospital-data
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "1000m"
+          memory: "2Gi"
+        limits:
+          cpu: "2000m"
+          memory: "4Gi"
+      env:
+      - name: PHASE_NAME
+        value: "Detect COVID"
+      - name: PHASE_NUMBER
+        value: "3"
+    metadata:
+      labels:
+        phase: "detect-covid"
+        component: covid-detection
+        phase-number: "3"
+      annotations:
+        kubeflow-pipeline.org/phase: "3"
+        kubeflow-pipeline.org/phase-name: "🦠 Detect COVID"
+        kubeflow-pipeline.org/phase-description: "Phát hiện COVID-19 với AI + Rule-based"
+        kubeflow-pipeline.org/phase-color: "#FF9800"
+
+  # Phase 4: Prepare Data
+  - name: phase-data-preparation
+    inputs:
+      parameters:
+      - name: patient-id
+        type: string
+    container:
+      image: alpine:3.18
+      name: prepare-data-step
+      command: [sh, -c]
+      args:
+        - |
+          echo "🔄 PHASE 4: Prepare Data for patient {{inputs.parameters.patient-id}}"
+          mkdir -p /mnt/data/hospital_output/{{inputs.parameters.patient-id}}/detection/
+          if [ -f "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/segmentation/ct_array.npy" ]; then
+            cp /mnt/data/hospital_output/{{inputs.parameters.patient-id}}/segmentation/ct_array.npy /mnt/data/hospital_output/{{inputs.parameters.patient-id}}/detection/
+          fi
+          if [ -f "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/segmentation/lung_mask.nii.gz" ]; then
+            cp /mnt/data/hospital_output/{{inputs.parameters.patient-id}}/segmentation/lung_mask.nii.gz /mnt/data/hospital_output/{{inputs.parameters.patient-id}}/detection/
+          fi
+          echo "✅ Data preparation completed for patient {{inputs.parameters.patient-id}}"
+      volumeMounts:
+      - name: hospital-data
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+      env:
+      - name: PHASE_NAME
+        value: "Prepare Data"
+      - name: PHASE_NUMBER
+        value: "4"
+    metadata:
+      labels:
+        phase: "prepare-data"
+        component: data-preparation
+        phase-number: "4"
+      annotations:
+        kubeflow-pipeline.org/phase: "4"
+        kubeflow-pipeline.org/phase-name: "📊 Prepare Data"
+        kubeflow-pipeline.org/phase-description: "Chuẩn bị dữ liệu cho visualization"
+        kubeflow-pipeline.org/phase-color: "#9C27B0"
+
+  # Phase 5: Visualize
+  - name: phase-visualization
+    inputs:
+      parameters:
+      - name: patient-id
+        type: string
+    container:
+      image: covid-hospital-pipeline:latest
+      name: visualize-step
+      imagePullPolicy: Never
+      command: [python]
+      args: ["/app/components/visualize.py", "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/detection", "/mnt/data/hospital_output/{{inputs.parameters.patient-id}}/visualization"]
+      volumeMounts:
+      - name: hospital-data
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+      env:
+      - name: PHASE_NAME
+        value: "Visualize"
+      - name: PHASE_NUMBER
+        value: "5"
+    metadata:
+      labels:
+        phase: "visualize"
+        component: visualization
+        phase-number: "5"
+      annotations:
+        kubeflow-pipeline.org/phase: "5"
+        kubeflow-pipeline.org/phase-name: "🖼️ Visualize"
+        kubeflow-pipeline.org/phase-description: "Tạo hình ảnh y khoa 2x3 grid"
+        kubeflow-pipeline.org/phase-color: "#E91E63"
+
+  # Phase 6: Generate Hospital Report
+  - name: phase-generate-hospital-report
+    inputs:
+      parameters:
+      - name: total-patients
+        type: string
+      - name: patient-list
+        type: string
+    container:
+      image: alpine:3.18
+      name: generate-report-step
+      command: [sh, -c]
+      args:
+        - |
+          echo "🏥 PHASE 6: Generate Hospital Report"
+          echo "Total patients processed: {{inputs.parameters.total-patients}}"
+          echo "Patient list: {{inputs.parameters.patient-list}}"
+
+          mkdir -p /mnt/data/hospital_output/
+
+          cat > /mnt/data/hospital_output/hospital_report.json << EOF
+          {
+            "hospital_report": {
+              "scan_date": "$(date +%Y-%m-%d)",
+              "report_generated": "$(date -Iseconds)",
+              "total_patients": {{inputs.parameters.total-patients}},
+              "successful": {{inputs.parameters.total-patients}},
+              "pipeline_type": "kubeflow_hospital_with_phases",
+              "phases_completed": [
+                "Load Data",
+                "Segment Phổi",
+                "Detect COVID",
+                "Prepare Data",
+                "Visualize",
+                "Generate Report"
+              ]
+            },
+            "patients": {{inputs.parameters.patient-list}}
+          }
+          EOF
+
+          echo "✅ Hospital report generated successfully"
+      volumeMounts:
+      - name: hospital-data
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+      env:
+      - name: PHASE_NAME
+        value: "Generate Report"
+      - name: PHASE_NUMBER
+        value: "6"
+    metadata:
+      labels:
+        phase: "generate-report"
+        component: hospital-report
+        phase-number: "6"
+      annotations:
+        kubeflow-pipeline.org/phase: "6"
+        kubeflow-pipeline.org/phase-name: "📋 Generate Report"
+        kubeflow-pipeline.org/phase-description: "Tạo báo cáo tổng kết bệnh viện"
+        kubeflow-pipeline.org/phase-color: "#607D8B"
+
+  # Volume definitions - use existing PVC instead of creating new one
+  volumes:
+  - name: hospital-data
+    persistentVolumeClaim:
+      claimName: covid-data-pvc

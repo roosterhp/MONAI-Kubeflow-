@@ -1,0 +1,305 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: hospital-covid-complete-pipeline
+  namespace: kubeflow
+  labels:
+    pipeline: "hospital-covid-detection"
+    version: "complete-v1"
+  annotations:
+    kubeflow-pipeline.org/description: "Hospital COVID-19 Detection Pipeline - Complete workflow from data loading to visualization"
+spec:
+  serviceAccountName: pipeline-runner
+  entrypoint: hospital-covid-pipeline
+  arguments:
+    parameters:
+    - name: input-dir
+      value: "/mnt/data/weekly_input"
+    - name: output-dir
+      value: "/mnt/data/hospital_output"
+    - name: container-image
+      value: "covid-hospital-pipeline:latest"
+
+  volumeClaimTemplates:
+  - metadata:
+      name: hospital-data-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 20Gi
+
+  templates:
+  # Main pipeline template
+  - name: hospital-covid-pipeline
+    inputs:
+      parameters:
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    steps:
+    # Step 1: Load data for all patients
+    - - name: load-data
+        template: load-data-template
+        arguments:
+          parameters:
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+
+    # Step 2: Process patients in parallel (segment -> detect -> visualize)
+    - - name: process-patients
+        template: process-patient-parallel
+        arguments:
+          parameters:
+          - name: patient-list
+            value: "{{steps.load-data.outputs.parameters.patient-list}}"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        when: "{{steps.load-data.outputs.parameters.has-patients}} == true"
+
+  # Load data template
+  - name: load-data-template
+    inputs:
+      parameters:
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    container:
+      image: "{{inputs.parameters.container-image}}"
+      name: load-data
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      args: ["/app/components/load_data.py", "{{inputs.parameters.input-dir}}", "{{inputs.parameters.output-dir}}"]
+      volumeMounts:
+      - name: hospital-data-pvc
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+      env:
+      - name: PYTHONPATH
+        value: "/app"
+    outputs:
+      parameters:
+      - name: patient-list
+        valueFrom:
+          path: /mnt/data/hospital_output/patient_list.txt
+      - name: has-patients
+        valueFrom:
+          path: /mnt/data/hospital_output/has_patients.txt
+
+  # Parallel patient processing template
+  - name: process-patient-parallel
+    inputs:
+      parameters:
+      - name: patient-list
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    steps:
+    # Define patient processing steps
+    - - name: process-lung-001
+        template: patient-processing-workflow
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "lung_001"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        when: "'lung_001' in '{{inputs.parameters.patient-list}}'"
+    - - name: process-lung-002
+        template: patient-processing-workflow
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "lung_002"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        when: "'lung_002' in '{{inputs.parameters.patient-list}}'"
+    - - name: process-lung-003
+        template: patient-processing-workflow
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "lung_003"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        when: "'lung_003' in '{{inputs.parameters.patient-list}}'"
+    - - name: process-lung-004
+        template: patient-processing-workflow
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "lung_004"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        when: "'lung_004' in '{{inputs.parameters.patient-list}}'"
+
+  # Individual patient processing workflow
+  - name: patient-processing-workflow
+    inputs:
+      parameters:
+      - name: patient-id
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    steps:
+    # Step 1: Lung Segmentation
+    - - name: lung-segmentation
+        template: lung-segmentation-template
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+
+    # Step 2: COVID Detection
+    - - name: covid-detection
+        template: covid-detection-template
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        depends: "lung-segmentation"
+
+    # Step 3: Visualization
+    - - name: visualization
+        template: visualization-template
+        arguments:
+          parameters:
+          - name: patient-id
+            value: "{{inputs.parameters.patient-id}}"
+          - name: input-dir
+            value: "{{inputs.parameters.input-dir}}"
+          - name: output-dir
+            value: "{{inputs.parameters.output-dir}}"
+          - name: container-image
+            value: "{{inputs.parameters.container-image}}"
+        depends: "covid-detection"
+
+  # Lung Segmentation Template
+  - name: lung-segmentation-template
+    inputs:
+      parameters:
+      - name: patient-id
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    container:
+      image: "{{inputs.parameters.container-image}}"
+      name: lung-segmentation
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      args: ["/app/components/lung_segment.py", "{{inputs.parameters.patient-id}}", "{{inputs.parameters.input-dir}}", "{{inputs.parameters.output-dir}}"]
+      volumeMounts:
+      - name: hospital-data-pvc
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+      env:
+      - name: PYTHONPATH
+        value: "/app"
+      - name: TF_ENABLE_ONEDNN_OPTS
+        value: "0"
+
+  # COVID Detection Template
+  - name: covid-detection-template
+    inputs:
+      parameters:
+      - name: patient-id
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    container:
+      image: "{{inputs.parameters.container-image}}"
+      name: covid-detection
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      args: ["/app/components/covid_detect.py", "{{inputs.parameters.patient-id}}", "{{inputs.parameters.input-dir}}", "{{inputs.parameters.output-dir}}"]
+      volumeMounts:
+      - name: hospital-data-pvc
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+      env:
+      - name: PYTHONPATH
+        value: "/app"
+      - name: TF_ENABLE_ONEDNN_OPTS
+        value: "0"
+
+  # Visualization Template
+  - name: visualization-template
+    inputs:
+      parameters:
+      - name: patient-id
+      - name: input-dir
+      - name: output-dir
+      - name: container-image
+    container:
+      image: "{{inputs.parameters.container-image}}"
+      name: visualization
+      imagePullPolicy: IfNotPresent
+      command: [python]
+      args: ["/app/components/visualize.py", "{{inputs.parameters.patient-id}}", "{{inputs.parameters.input-dir}}", "{{inputs.parameters.output-dir}}"]
+      volumeMounts:
+      - name: hospital-data-pvc
+        mountPath: /mnt/data
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+      env:
+      - name: PYTHONPATH
+        value: "/app"

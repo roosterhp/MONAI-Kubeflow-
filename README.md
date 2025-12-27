@@ -435,5 +435,344 @@ Tạo file `inference.py`:
 python inference_demo.py
 ```
 
+---
+
+## PHẦN 9: TROUBLESHOOTING - GIẢI QUYẾT VẤN ĐỀ THƯỜNG GẶP
+
+### 🚨 Vấn đề 1: "Input directory not found: /mnt/data/weekly_input"
+
+**Nguyên nhân**: Pipeline không tìm thấy thư mục dữ liệu đầu vào do volume mounting chưa được cấu hình đúng.
+
+**Giải pháp**:
+
+#### Bước 9.1: Kiểm tra Minikube Volume Mounting
+```powershell
+# Kiểm tra Minikube đang chạy
+minikube status
+
+# Dừng Minikube nếu đang chạy
+minikube stop
+
+# Khởi động lại với volume mounting (thay YOUR_WINDOWS_PATH bằng đường dẫn thực tế)
+$WINDOWS_PATH = "C:\Users\YOUR_USERNAME\Documents\monai-kubeflow-demo\hospital-mlops\covid-demo\data"
+minikube start --driver=docker --mount-string="$WINDOWS_PATH:/mnt/data" --cpus=4 --memory=6144
+
+# Xác nhận volume đã được mount
+minikube ssh "ls -la /mnt/data"
+```
+
+#### Bước 9.2: Cấu hình PVC/PV cho Kubernetes
+```powershell
+# Apply persistent volume configuration
+kubectl apply -f hospital-mlops/covid-demo/kubernetes/pv.yaml
+kubectl apply -f hospital-mlops/covid-demo/kubernetes/pvc.yaml
+
+# Kiểm tra PVC status
+kubectl get pvc
+
+# Nếu PVC đang ở trạng thái "Pending", kiểm tra PV
+kubectl get pv
+```
+
+#### Bước 9.3: Chuẩn bị dữ liệu đầu vào
+```powershell
+# Tạo thư mục cấu trúc đúng
+mkdir -p "hospital-mlops/covid-demo/data/input"
+mkdir -p "hospital-mlops/covid-demo/data/output"
+
+# Copy hoặc download các file CT scan mẫu
+# Ví dụ: lung_001.nii.gz, lung_002.nii.gz, etc.
+```
+
+### 🚨 Vấn đề 2: Pipeline pods bị "CrashLoopBackOff"
+
+**Nguyên nhân**: Pods không thể start do lỗi cấu hình hoặc thiếu resources.
+
+**Giải pháp**:
+```powershell
+# Xem logs của pod
+kubectl describe pod <pod-name> -n kubeflow
+kubectl logs <pod-name> -n kubeflow
+
+# Kiểm tra resource limits
+kubectl describe nodes
+
+# Tăng resources nếu cần
+# Edit deployment để tăng memory/cpu limits
+```
+
+### 🚨 Vấn đề 3: Docker build quá chậm (15-20 phút)
+
+**Nguyên nhân**: Build Docker từ đầu mỗi lần, không có layer caching.
+
+**Giải pháp**:
+```powershell
+# Sử dụng Docker build đã tối ưu
+cd hospital-mlops/covid-demo
+.\scripts\build_optimized.sh
+
+# Hoặc dùng NGC base image cho GPU
+.\scripts\build_optimized.sh ngc
+
+# Kiểm tra Dockerfile đã tối ưu
+cat config/Dockerfile.optimized
+```
+
+### 🚨 Vấn đề 4: Kubeflow UI không thể truy cập (localhost:8080)
+
+**Nguyên nhân**: Port forwarding không được thiết lập đúng.
+
+**Giải pháp**:
+```powershell
+# Mở cửa sổ PowerShell mới và giữ mở
+kubectl port-forward -n kubeflow svc/ml-pipeline-ui 8080:80
+
+# Kiểm tra service đang chạy
+kubectl get svc -n kubeflow
+
+# Nếu service không tồn tại, deploy lại Kubeflow
+kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=2.0.5"
+```
+
+### 🚨 Vấn đề 5: Memory error khi xử lý CT scans
+
+**Nguyên nhân**: CT scans quá lớn cho memory allocated.
+
+**Giải pháp**:
+```powershell
+# Tăng Minikube memory
+minikube stop
+minikube start --driver=docker --memory=8192 --cpus=4
+
+# Hoặc configure resource limits trong deployment
+# Edit file YAML để tăng memory limits
+```
+
+### 🔧 Verification Steps - Kiểm tra sau khi fix
+
+#### Bước 9.4: Test Data Access
+```powershell
+# Test truy cập data từ trong Minikube
+minikube ssh "ls -la /mnt/data/weekly_input"
+minikube ssh "find /mnt/data -name '*.nii.gz'"
+
+# Test từ container
+docker run --rm -v /host/path:/data covid-pipeline:v1 ls -la /data
+```
+
+#### Bước 9.5: Test Pipeline Component
+```powershell
+# Test individual components locally
+cd hospital-mlops/covid-demo
+python components/load_data.py lung_001
+python components/lung_segment.py lung_001
+python components/covid_detect_enhanced.py lung_001
+```
+
+#### Bước 9.6: Test Full Pipeline
+```bash
+# Run pipeline locally first
+python run_pipeline_simple.py
+
+# Nếu thành công, deploy lên Kubeflow
+python pipeline.py
+```
+
+### 📋 Health Checklist
+
+Trước khi chạy pipeline, đảm bảo:
+
+- [ ] **Minikube đang chạy**: `minikube status`
+- [ ] **Volume mounted đúng**: `minikube ssh "ls /mnt/data"`
+- [ ] **Docker image built**: `docker images | grep covid-pipeline`
+- [ ] **Kubeflow pods running**: `kubectl get pods -n kubeflow`
+- [ ] **Input data có sẵn**: `ls hospital-mlops/covid-demo/data/input/`
+- [ ] **PVC bound**: `kubectl get pvc` (status: Bound)
+- [ ] **Port forwarding active**: `kubectl port-forward` running
+
+### 🆘 Khi cần hỗ trợ thêm
+
+1. **Check logs luôn**:
+   ```powershell
+   # Pipeline logs
+   kubectl get pods -n kubeflow
+   kubectl logs <pod-name> -n kubeflow
+
+   # System logs
+   minikube logs
+   docker logs <container-name>
+   ```
+
+2. **Reset environment nếu cần**:
+   ```powershell
+   # Reset Minikube
+   minikube delete
+   minikube start --driver=docker --mount-string="YOUR_PATH:/mnt/data"
+
+   # Reset Kubernetes
+   kubectl delete all --all -n kubeflow
+   ```
+
+3. **Documentation tham khảo**:
+   - `./docs/project-overview-pdr.md` - Tổng quan project
+   - `./docs/troubleshooting-guide.md` - Hướng dẫn chi tiết
+   - `./docs/deployment-guide.md` - Hướng dẫn deployment
+
+**✅ Success Indicator**: Pipeline chạy thành công khi tất cả components trong Kubeflow UI hiển thị màu xanh lá!
+
+---
+
+## 📁 CẤU TRÚC FOLDER CỦA PROJECT
+
+### 🏥 Hospital MLOps - Production Pipeline
+```
+hospital-mlops/
+├── README.md                    # Tổng quan hệ thống AI cho bệnh viện
+├── covid-demo/                  # Pipeline COVID-19 detection hoàn chỉnh
+│   ├── README.md               # Chi tiết pipeline (lung seg → detection → viz)
+│   ├── components/             # Core components (load, segment, detect, visualize)
+│   ├── config/                 # Docker, requirements
+│   ├── data/                   # Input/output CT scans
+│   ├── kubernetes/             # PV, PVC configs
+│   └── pipeline.py             # Kubeflow pipeline definition
+├── demo/                       # Comparison demos (Rule-based vs MONAI)
+├── deployment/                 # FastAPI inference service
+│   └── README.md               # Deployment guide
+└── pretrained-models/          # Downloaded MONAI models
+```
+**➡️ Xem chi tiết**: [hospital-mlops/README.md](hospital-mlops/README.md) và [hospital-mlops/covid-demo/README.md](hospital-mlops/covid-demo/README.md)
+
+---
+
+### 📚 Week-by-Week Learning Path
+
+#### Week 3 - External Model Integration
+```
+week3/
+├── README.md                   # EfficientNetV2-S integration với MONAI
+├── components/                 # Kubeflow components (preprocess, train, evaluate)
+├── models/                     # Model wrappers
+├── pipeline/                   # Pipeline definitions
+└── deployment/                 # KServe deployment manifests
+```
+**➡️ Xem chi tiết**: [week3/README.md](week3/README.md)
+
+#### Week 4 - Model Replacement & Ensemble
+```
+week4/
+├── README.md                   # So sánh 3 options tích hợp external models
+├── option1/                    # Direct Replacement
+│   └── README.md
+├── option2/                    # Wrapper Adapter (RECOMMENDED)
+│   └── README.md
+└── option3/                    # Ensemble (Best Accuracy)
+    └── README.md
+```
+**➡️ Xem chi tiết**: [week4/README.md](week4/README.md)
+
+**Key Takeaway**: Chỉ cần ~10 dòng code để tăng accuracy từ 82% → 94%!
+
+#### Week 5 - Clean Pipeline Implementation
+```
+week5/
+├── README.md                   # Clean COVID-19 pipeline với ensemble
+├── components/                 # Simplified components
+├── config/                     # Requirements, Dockerfile
+├── data/                       # Input/output structure
+├── run_pipeline_simple.py     # Local testing runner
+└── pipeline.py                # Kubeflow pipeline
+```
+**➡️ Xem chi tiết**: [week5/README.md](week5/README.md)
+
+#### Week 6-9 - Production Deployment & Scaling
+```
+week6+7+8+9/
+├── README.md                  # Tổng quan 4 tuần
+├── week6/                     # Database & Storage
+│   ├── README.md             # Database deployment guide
+│   └── mysql-*.yaml          # MySQL configs
+├── week7/                     # Horizontal Pod Autoscaling
+│   ├── README.md             # HPA guide
+│   ├── kubeflow-hpa-config.yaml
+│   └── *-autoscaling.sh      # Test & monitor scripts
+├── week8/                     # Deployment Strategies
+│   ├── README.md             # Deployment guide
+│   └── kubeflow-deployments-config.yaml
+└── week9/                     # Production Testing
+    ├── README.md             # Testing guide
+    └── test-*.sh             # Database tests
+```
+**➡️ Xem chi tiết**: [week6+7+8+9/README.md](week6+7+8+9/README.md)
+
+**Topics**: Week 6 (Database), Week 7 (HPA), Week 8 (Deploy), Week 9 (Testing)
+
+---
+
+### 🔧 Supporting Folders
+
+```
+components/                     # Shared components (if any)
+└── README.md                  # Component reuse guide
+
+docs/                          # Tài liệu tổng quan project
+└── README.md                  # Documentation guide
+
+kubeflow-install/              # Kubeflow installation manifests
+└── README.md                  # Installation guide
+
+kubeflow-pipelines/            # Compiled pipeline YAML files
+└── README.md                  # How to upload to UI
+
+models/                        # Downloaded pretrained models (500MB-2GB)
+└── README.md                  # Model download guide
+
+plans/                         # Implementation plans
+├── README.md                  # Planning structure guide
+└── YYMMDD-HHMM-feature-name/  # Each feature plan
+
+venv/, monai_env/              # Python virtual environments (DO NOT COMMIT)
+```
+
+---
+
+## 🗺️ LEARNING PATH - Lộ trình học
+
+### 👶 Người mới bắt đầu
+1. ✅ **Đọc README chính** (file này) → Hiểu tổng quan
+2. ✅ **Cài đặt môi trường** → PHẦN 1-4 ở trên
+3. ➡️ **Week 4** ([week4/README.md](week4/README.md)) → Hiểu cách tích hợp external models
+4. ➡️ **Week 5** ([week5/README.md](week5/README.md)) → Chạy COVID-19 pipeline
+5. ➡️ **Production** ([hospital-mlops/covid-demo/](hospital-mlops/covid-demo/)) → Pipeline hoàn chỉnh
+
+### 👨‍💻 Developer muốn deploy
+1. ➡️ **Production Pipeline** ([hospital-mlops/covid-demo/README.md](hospital-mlops/covid-demo/README.md))
+2. ➡️ **Week 6-9** ([week6+7+8+9/README.md](week6+7+8+9/README.md)) → Database, scaling
+3. ➡️ **Docs** ([docs/](docs/)) → Architecture và deployment
+
+### 🔬 Researcher muốn improve models
+1. ➡️ **Week 4** ([week4/README.md](week4/README.md)) → Model replacement strategies
+2. ➡️ **Comparison Demo** ([hospital-mlops/demo/](hospital-mlops/demo/)) → Rule-based vs MONAI
+3. ➡️ **Pretrained Models** ([models/README.md](models/README.md)) → MONAI Model Zoo
+
+---
+
+## 🎯 Quick Navigation
+
+| Tôi muốn... | Đọc file nào? |
+|------------|---------------|
+| Hiểu tổng quan project | README.md (file này) |
+| Setup môi trường | README.md PHẦN 1-4 |
+| Hiểu COVID pipeline | [hospital-mlops/covid-demo/README.md](hospital-mlops/covid-demo/README.md) |
+| Tích hợp external models | [week4/README.md](week4/README.md) |
+| Deploy production | [week6+7+8+9/README.md](week6+7+8+9/README.md) |
+| Download pretrained models | [models/README.md](models/README.md) |
+| Xem tài liệu kỹ thuật | [docs/README.md](docs/README.md) |
+| Tạo implementation plan | [plans/README.md](plans/README.md) |
+
+---
+
+**Last Updated**: 2025-12-27
+**Version**: 2.1 (Comprehensive Folder Structure Guide)
+
 
 

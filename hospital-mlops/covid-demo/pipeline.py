@@ -39,10 +39,10 @@ def lung_segment_component(patient_id: str):
 
 @dsl.container_component
 def covid_detect_component(patient_id: str):
-    """Detect COVID-19 using rule-based method"""
+    """Detect COVID-19 using enhanced MONAI + rule-based ensemble"""
     return dsl.ContainerSpec(
         image=BASE_IMAGE,
-        command=["python", "/app/components/covid_detect.py"],
+        command=["python", "/app/components/covid_detect_enhanced.py"],
         args=[patient_id]
     )
 
@@ -68,8 +68,8 @@ def finetune_component(batch_id: str, patient_list: str):
 
 
 @dsl.pipeline(
-    name="COVID-19 Detection Pipeline with Fine-tuning",
-    description="COVID-19 CT detection: load_data -> lung_segment -> covid_detect -> visualize -> finetune"
+    name="Enhanced COVID-19 Detection Pipeline",
+    description="Enhanced COVID-19 CT detection with MONAI + Rule-based Ensemble: load_data -> lung_segment -> covid_detect_enhanced -> visualize -> finetune"
 )
 def covid_pipeline():
     """Main pipeline: Process all patients in PARALLEL, then fine-tune"""

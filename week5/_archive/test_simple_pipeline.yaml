@@ -1,0 +1,112 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: covid-simple-test-
+  annotations:
+    pipelines.kubeflow.org/kfp_sdk_version: 2.14.6
+spec:
+  entrypoint: covid-pipeline
+  arguments:
+    parameters:
+    - name: input_dir
+      value: /mnt/data/weekly_input
+    - name: output_dir
+      value: /mnt/data/hospital_output
+  templates:
+  - name: covid-pipeline
+    inputs:
+      parameters:
+      - name: input_dir
+      - name: output_dir
+    dag:
+      tasks:
+      - name: load-patient-1
+        template: load-data
+        arguments:
+          parameters:
+          - name: input_dir
+            value: '{{inputs.parameters.input_dir}}'
+          - name: patient_id
+            value: lung_001
+      - name: segment-patient-1
+        template: segment-lungs
+        dependencies:
+        - load-patient-1
+        arguments:
+          parameters:
+          - name: load_result
+            value: '{{tasks.load-patient-1.outputs.result}}'
+          - name: patient_id
+            value: lung_001
+      - name: detect-patient-1
+        template: detect-covid
+        dependencies:
+        - segment-patient-1
+        arguments:
+          parameters:
+          - name: segment_result
+            value: '{{tasks.segment-patient-1.outputs.result}}'
+          - name: patient_id
+            value: lung_001
+  - name: load-data
+    inputs:
+      parameters:
+      - name: input_dir
+      - name: patient_id
+    script:
+      image: python:3.10-slim
+      command:
+      - python
+      source: "\nimport json\nimport sys\nfrom pathlib import Path\n\ninput_dir =\
+        \ \"{{inputs.parameters.input_dir}}\"\npatient_id = \"{{inputs.parameters.patient_id}}\"\
+        \n\nprint(f\"[LOAD] Processing: {patient_id}\", file=sys.stderr)\n\ntry:\n\
+        \    result = {\n        \"component\": \"load_data\",\n        \"patient_id\"\
+        : patient_id,\n        \"status\": \"completed\",\n        \"message\": f\"\
+        Loaded {patient_id}\"\n    }\n    print(json.dumps(result))\nexcept Exception\
+        \ as e:\n    result = {\"status\": \"failed\", \"error\": str(e)}\n    print(json.dumps(result))\n\
+        \    sys.exit(1)\n"
+  - name: segment-lungs
+    inputs:
+      parameters:
+      - name: load_result
+      - name: patient_id
+    script:
+      image: python:3.10-slim
+      command:
+      - python
+      source: "\nimport json\nimport sys\n\nload_result = \"\"\"{{inputs.parameters.load_result}}\"\
+        \"\"\npatient_id = \"{{inputs.parameters.patient_id}}\"\n\nprint(f\"[SEGMENT]\
+        \ Processing: {patient_id}\", file=sys.stderr)\n\ntry:\n    load_data = json.loads(load_result)\n\
+        \    if load_data.get(\"status\") != \"completed\":\n        raise ValueError(f\"\
+        Load failed: {load_data.get('error')}\")\n    \n    import random\n    random.seed(hash(patient_id)\
+        \ % 1000)\n    lung_volume = random.randint(7000000, 9000000)\n    \n    result\
+        \ = {\n        \"component\": \"lung_segmentation\",\n        \"patient_id\"\
+        : patient_id,\n        \"lung_volume\": lung_volume,\n        \"status\":\
+        \ \"completed\",\n        \"message\": f\"Segmented {patient_id}\"\n    }\n\
+        \    print(json.dumps(result))\nexcept Exception as e:\n    result = {\"status\"\
+        : \"failed\", \"error\": str(e), \"patient_id\": patient_id}\n    print(json.dumps(result))\n\
+        \    sys.exit(1)\n"
+  - name: detect-covid
+    inputs:
+      parameters:
+      - name: segment_result
+      - name: patient_id
+    script:
+      image: python:3.10-slim
+      command:
+      - python
+      source: "\nimport json\nimport sys\n\nsegment_result = \"\"\"{{inputs.parameters.segment_result}}\"\
+        \"\"\npatient_id = \"{{inputs.parameters.patient_id}}\"\n\nprint(f\"[DETECT]\
+        \ Processing: {patient_id}\", file=sys.stderr)\n\ntry:\n    seg_data = json.loads(segment_result)\n\
+        \    if seg_data.get(\"status\") != \"completed\":\n        raise ValueError(f\"\
+        Segmentation failed: {seg_data.get('error')}\")\n    \n    import random\n\
+        \    random.seed(hash(patient_id) % 100)\n    probability = random.randint(20,\
+        \ 95)\n    \n    if probability > 75:\n        likelihood = \"HIGH\"\n   \
+        \ elif probability > 50:\n        likelihood = \"MODERATE\"\n    else:\n \
+        \       likelihood = \"LOW\"\n    \n    result = {\n        \"component\"\
+        : \"covid_detection\",\n        \"patient_id\": patient_id,\n        \"likelihood\"\
+        : likelihood,\n        \"probability\": probability,\n        \"status\":\
+        \ \"completed\",\n        \"message\": f\"Detected for {patient_id}\"\n  \
+        \  }\n    print(json.dumps(result))\nexcept Exception as e:\n    result =\
+        \ {\"status\": \"failed\", \"error\": str(e), \"patient_id\": patient_id}\n\
+        \    print(json.dumps(result))\n    sys.exit(1)\n"

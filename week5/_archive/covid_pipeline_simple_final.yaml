@@ -1,0 +1,140 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: covid-simple-
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+    - name: patient_id
+      value: lung_001
+
+  templates:
+  - name: main
+    steps:
+    - - name: analyze
+        template: full-analysis
+        arguments:
+          parameters:
+          - name: patient_id
+            value: "{{workflow.parameters.patient_id}}"
+
+  - name: full-analysis
+    inputs:
+      parameters:
+      - name: patient_id
+    outputs:
+      artifacts:
+      - name: viz-png
+        path: /tmp/viz.png
+    script:
+      image: python:3.10-slim
+      command: [bash]
+      source: |
+        echo "[INSTALL] Installing dependencies..."
+        pip install -q matplotlib numpy
+
+        echo "[ANALYSIS] Starting full COVID-19 analysis..."
+        python << 'EOF'
+        import json
+        import random
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+
+        patient_id = "{{inputs.parameters.patient_id}}"
+
+        # Step 1: Load Data
+        print(f"[1/4] Loading data for {patient_id}...")
+        Path("/tmp/input").mkdir(exist_ok=True)
+        mock_file = Path(f"/tmp/input/{patient_id}.nii.gz")
+        mock_file.write_bytes(b"MOCK_DATA" * 1000)
+        print(f"[1/4] ✓ Loaded {mock_file.stat().st_size} bytes")
+
+        # Step 2: Segment Lungs
+        print(f"[2/4] Segmenting lungs...")
+        random.seed(hash(patient_id))
+        lung_volume = random.randint(7000000, 9000000)
+        print(f"[2/4] ✓ Lung volume: {lung_volume:,} voxels")
+
+        # Step 3: Detect COVID
+        print(f"[3/4] Detecting COVID-19...")
+        random.seed(hash(patient_id) % 100)
+        prob = random.randint(20, 95)
+        if prob > 75:
+            risk = "HIGH"
+            color = "red"
+        elif prob > 50:
+            risk = "MODERATE"
+            color = "orange"
+        else:
+            risk = "LOW"
+            color = "green"
+        print(f"[3/4] ✓ Risk: {risk} ({prob}%)")
+
+        # Step 4: Create Visualization
+        print(f"[4/4] Creating visualization...")
+        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+        fig.suptitle(f"COVID-19 Complete Analysis - {patient_id}",
+                     fontsize=14, fontweight="bold")
+
+        # Panel 1: Load Data
+        axes[0, 0].text(0.5, 0.5, "1. Load Data\n✓ Completed",
+                       ha="center", va="center", fontsize=12,
+                       color="green", fontweight="bold")
+        axes[0, 0].axis("off")
+
+        # Panel 2: Segment
+        axes[0, 1].text(0.5, 0.5, f"2. Segment Lungs\n✓ Volume: {lung_volume:,}",
+                       ha="center", va="center", fontsize=12,
+                       color="blue", fontweight="bold")
+        axes[0, 1].axis("off")
+
+        # Panel 3: Detect
+        axes[1, 0].text(0.5, 0.5, f"3. Detect COVID\n✓ Risk: {risk}",
+                       ha="center", va="center", fontsize=12,
+                       color=color, fontweight="bold")
+        axes[1, 0].axis("off")
+
+        # Panel 4: Results
+        result_text = f"""
+Patient: {patient_id}
+
+Risk Level: {risk}
+Probability: {prob}%
+
+Lung Volume: {lung_volume:,}
+
+Status: Complete
+        """
+        axes[1, 1].text(0.5, 0.5, result_text.strip(),
+                       ha="center", va="center", fontsize=10,
+                       bbox=dict(boxstyle="round,pad=1",
+                                facecolor=color, alpha=0.3))
+        axes[1, 1].axis("off")
+
+        plt.tight_layout()
+        plt.savefig("/tmp/viz.png", dpi=100, bbox_inches="tight")
+        plt.close()
+
+        print(f"[4/4] ✓ Saved visualization to /tmp/viz.png")
+
+        # Summary
+        summary = {
+            "patient_id": patient_id,
+            "lung_volume": lung_volume,
+            "risk": risk,
+            "probability": prob,
+            "status": "completed"
+        }
+        print("\n=== SUMMARY ===")
+        print(json.dumps(summary, indent=2))
+        EOF
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 500m
+        limits:
+          memory: 1Gi
+          cpu: "1"
