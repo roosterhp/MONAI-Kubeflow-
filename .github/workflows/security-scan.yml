@@ -21,15 +21,14 @@ jobs:
 
       - name: Build image for scanning
         run: |
-          docker build -t covid-pipeline:scan \
-            -f hospital-mlops/covid-demo/config/Dockerfile.optimized \
-            hospital-mlops/covid-demo \
-            --build-arg BUILDKIT_INLINE_CACHE=1
+          docker build -t demo-app:scan \
+            -f demo-app/Dockerfile \
+            demo-app
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'covid-pipeline:scan'
+          image-ref: 'demo-app:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -44,7 +43,7 @@ jobs:
       - name: Generate vulnerability report
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'covid-pipeline:scan'
+          image-ref: 'demo-app:scan'
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
           output: 'trivy-report.txt'

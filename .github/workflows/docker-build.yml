@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/covid-pipeline
+  IMAGE_NAME: ${{ github.repository }}/demo-app
 
 jobs:
   build-and-push:
@@ -53,8 +53,8 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v5
         with:
-          context: ./hospital-mlops/covid-demo
-          file: ./hospital-mlops/covid-demo/config/Dockerfile.optimized
+          context: ./demo-app
+          file: ./demo-app/Dockerfile
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -65,16 +65,13 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v5
         with:
-          context: ./hospital-mlops/covid-demo
-          file: ./hospital-mlops/covid-demo/config/Dockerfile.optimized
+          context: ./demo-app
+          file: ./demo-app/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
-            VCS_REF=${{ github.sha }}
 
       - name: Image summary
         run: |
