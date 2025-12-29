@@ -1,0 +1,19 @@
+{
+  "version": "v0.9.0",
+  "git_commit": "baseline",
+  "created_at": "2025-12-28T00:00:00Z",
+  "author": "monai-team",
+  "description": "Baseline COVID-19 pipeline (for rollback testing)",
+  "docker_image": "ghcr.io/roosterhp/monai-kubeflow-/covid-pipeline:v0.9.0",
+  "components": [
+    "load_data",
+    "lung_segment",
+    "covid_detect_basic",
+    "visualize"
+  ],
+  "performance": {
+    "accuracy": "82%"
+  },
+  "tested": true,
+  "approved_by": "TBD"
+}

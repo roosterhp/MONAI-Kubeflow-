@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: scaling-hpa
+  namespace: argocd
+  labels:
+    component: scaling
+    week: week7
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/roosterhp/MONAI-Kubeflow-
+    targetRevision: main
+    path: manifests/scaling/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubeflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false  # Manual intervention if drift (HPA managed)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignore HPA-managed replicas

@@ -1,0 +1,42 @@
+name: Update Manifests with New Image Tag
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  update-manifests:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image tag
+        id: extract
+        run: |
+          # Get latest commit SHA
+          SHA=$(git rev-parse --short HEAD)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "image_tag=ghcr.io/${{ github.repository }}/covid-pipeline:sha-$SHA" >> $GITHUB_OUTPUT
+
+      - name: Update pipeline manifest
+        run: |
+          # Update image in pipeline YAML if needed
+          # This is a placeholder - actual implementation depends on pipeline structure
+          echo "Image tag: ${{ steps.extract.outputs.image_tag }}"
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifests/pipelines/
+          git commit -m "chore: Update pipeline image to ${{ steps.extract.outputs.sha }}" || echo "No changes"
+          git push

@@ -1,0 +1,55 @@
+name: ArgoCD Health Check
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Check ArgoCD Pods
+        timeout-minutes: 5
+        run: |
+          echo "Checking ArgoCD pod health..."
+          kubectl get pods -n argocd
+
+          # Count running pods
+          RUNNING=$(kubectl get pods -n argocd --no-headers | grep -c Running || echo "0")
+          EXPECTED=7
+
+          if [ "$RUNNING" -lt "$EXPECTED" ]; then
+            echo "❌ Only $RUNNING/$EXPECTED ArgoCD pods running"
+            exit 1
+          else
+            echo "✅ All $RUNNING/$EXPECTED ArgoCD pods healthy"
+          fi
+
+      - name: Check ArgoCD API Server
+        timeout-minutes: 3
+        run: |
+          echo "Testing ArgoCD API server..."
+          kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+          PF_PID=$!
+          sleep 5
+
+          # Test API endpoint
+          curl -k https://localhost:8080/healthz || exit 1
+
+          kill $PF_PID
+          echo "✅ ArgoCD API server healthy"
+
+      - name: Report Status
+        if: always()
+        run: |
+          echo "Health check complete. Review logs above for details."

@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ml-pipelines
+  namespace: argocd
+spec:
+  description: MONAI Kubeflow ML Pipelines
+  sourceRepos:
+    - 'https://github.com/roosterhp/MONAI-Kubeflow-*'
+  destinations:
+    - namespace: kubeflow
+      server: https://kubernetes.default.svc
+    - namespace: default
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: 'argoproj.io'
+      kind: 'Workflow'
+    - group: 'kubeflow.org'
+      kind: 'PipelineRun'
+    - group: ''
+      kind: 'PersistentVolumeClaim'
+    - group: 'apps'
+      kind: 'Deployment'
+    - group: 'apps'
+      kind: 'StatefulSet'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  description: Database and Scaling Infrastructure
+  sourceRepos:
+    - 'https://github.com/roosterhp/MONAI-Kubeflow-*'
+  destinations:
+    - namespace: kubeflow
+      server: https://kubernetes.default.svc
+    - namespace: default
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: 'apps'
+      kind: 'Deployment'
+    - group: 'apps'
+      kind: 'StatefulSet'
+    - group: ''
+      kind: 'Service'
+    - group: ''
+      kind: 'PersistentVolumeClaim'
+    - group: 'autoscaling'
+      kind: 'HorizontalPodAutoscaler'

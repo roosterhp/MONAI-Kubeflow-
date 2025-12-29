@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infrastructure-mysql
+  namespace: argocd
+  labels:
+    component: infrastructure
+    week: week6
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/roosterhp/MONAI-Kubeflow-
+    targetRevision: main
+    path: manifests/infrastructure/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubeflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

@@ -1,0 +1,4 @@
+# PLACEHOLDER: Baseline Pipeline v0.9.0
+#
+# This is a simplified version for rollback testing
+# Compile from hospital-mlops/covid-demo/pipeline.py with baseline configuration

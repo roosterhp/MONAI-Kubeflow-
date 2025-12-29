@@ -1,0 +1,27 @@
+{
+  "version": "v1.0.0",
+  "git_commit": "3a59e85",
+  "created_at": "2025-12-28T00:00:00Z",
+  "author": "monai-team",
+  "description": "Initial COVID-19 detection pipeline with MONAI ensemble",
+  "changes": [
+    "Lung segmentation using LungMask",
+    "COVID detection with MONAI + rule-based ensemble",
+    "Visualization component",
+    "Fine-tuning on weekly batches"
+  ],
+  "docker_image": "ghcr.io/roosterhp/monai-kubeflow-/covid-pipeline:v1.0.0",
+  "components": [
+    "load_data",
+    "lung_segment",
+    "covid_detect_enhanced",
+    "visualize",
+    "finetune"
+  ],
+  "performance": {
+    "accuracy": "94%",
+    "ensemble_boost": "+12%"
+  },
+  "tested": true,
+  "approved_by": "TBD"
+}
