@@ -1,0 +1,21 @@
+# Simple test application để demo CI/CD
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: simple-test
+  namespace: argocd
+spec:
+  project: default  # Dùng default project để tránh permission issues
+  source:
+    repoURL: https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-.git
+    targetRevision: main
+    path: manifests/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubeflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

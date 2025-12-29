@@ -6,23 +6,18 @@ metadata:
 spec:
   description: MONAI Kubeflow ML Pipelines
   sourceRepos:
-    - 'https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-.git*'
+    - 'https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-*'
+    - '*'  # Allow all repos for easier testing
   destinations:
     - namespace: kubeflow
       server: https://kubernetes.default.svc
     - namespace: default
       server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist:
-    - group: 'argoproj.io'
-      kind: 'Workflow'
-    - group: 'kubeflow.org'
-      kind: 'PipelineRun'
-    - group: ''
-      kind: 'PersistentVolumeClaim'
-    - group: 'apps'
-      kind: 'Deployment'
-    - group: 'apps'
-      kind: 'StatefulSet'
+    - group: '*'
+      kind: '*'
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -32,20 +27,13 @@ metadata:
 spec:
   description: Database and Scaling Infrastructure
   sourceRepos:
-    - 'https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-.git*'
+    - 'https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-*'
+    - '*'  # Allow all repos for easier testing
   destinations:
     - namespace: kubeflow
       server: https://kubernetes.default.svc
     - namespace: default
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
-    - group: 'apps'
-      kind: 'Deployment'
-    - group: 'apps'
-      kind: 'StatefulSet'
-    - group: ''
-      kind: 'Service'
-    - group: ''
-      kind: 'PersistentVolumeClaim'
-    - group: 'autoscaling'
-      kind: 'HorizontalPodAutoscaler'
+    - group: '*'
+      kind: '*'
