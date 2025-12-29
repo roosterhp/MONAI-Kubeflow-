@@ -49,12 +49,25 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker image
+      - name: Build Docker image (test)
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v5
         with:
           context: ./hospital-mlops/covid-demo
           file: ./hospital-mlops/covid-demo/config/Dockerfile.optimized
-          push: ${{ github.event_name != 'pull_request' }}
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hospital-mlops/covid-demo
+          file: ./hospital-mlops/covid-demo/config/Dockerfile.optimized
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -63,5 +76,8 @@ jobs:
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VCS_REF=${{ github.sha }}
 
-      - name: Image digest
-        run: echo ${{ steps.meta.outputs.digest }}
+      - name: Image summary
+        run: |
+          echo "### Docker Build Complete ✓" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Push:** ${{ github.event_name != 'pull_request' }}" >> $GITHUB_STEP_SUMMARY
