@@ -56,4 +56,4 @@ jobs:
           echo "### ✅ Release Created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${{ steps.version.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Image**: \`ghcr.io/${{ github.repository }}/demo-app:${{ steps.version.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Image**: \`ghcr.io/roosterhp/monai-kubeflow/demo-app:${{ steps.version.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY

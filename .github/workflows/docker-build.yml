@@ -13,7 +13,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/demo-app
+  IMAGE_NAME: roosterhp/monai-kubeflow/demo-app
 
 jobs:
   build-and-push:
