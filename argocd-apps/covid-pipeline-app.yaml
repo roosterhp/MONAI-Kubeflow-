@@ -9,7 +9,7 @@ metadata:
 spec:
   project: ml-pipelines
   source:
-    repoURL: https://github.com/roosterhp/MONAI-Kubeflow-
+    repoURL: https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-.git
     targetRevision: v1.0.0  # Points to git tag
     path: manifests/pipelines/covid-detection/versions/v1.0.0
   destination:

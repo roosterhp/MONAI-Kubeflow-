@@ -8,7 +8,7 @@ metadata:
 spec:
   project: ml-pipelines
   source:
-    repoURL: https://github.com/roosterhp/MONAI-Kubeflow-
+    repoURL: https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-.git
     targetRevision: main
     path: argocd-apps
   destination:
