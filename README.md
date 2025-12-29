@@ -706,6 +706,30 @@ week6+7+8+9/
 
 **Topics**: Week 6 (Database), Week 7 (HPA), Week 8 (Deploy), Week 9 (Testing)
 
+#### Week 10 - CI/CD for ML Pipelines with GitOps
+```
+week10/
+├── README.md                          # Tổng quan CI/CD & GitOps
+├── argocd-projects.yaml               # ArgoCD project definitions
+├── scripts/                           # Automation scripts
+│   ├── setup-argocd.ps1              # ArgoCD automated setup
+│   └── access-argocd-ui.ps1          # UI access helper
+├── test-argocd-comprehensive.sh       # 12 tests suite (91.7% pass)
+├── PHASE01-COMPLETION-REPORT.md       # Phase 01 summary
+├── TEST-RESULTS-SUMMARY.md            # Test results
+├── TESTING-METHODOLOGY.md             # Test methodology
+└── DELIVERABLES-INDEX.md              # All deliverables index
+```
+**➡️ Xem chi tiết**: [week10/README.md](week10/README.md)
+
+**Phase 01 Status**: ✅ **HOÀN THÀNH** (ArgoCD Setup & Validation)
+- ArgoCD v3.1.9 deployed (7/7 pods Running)
+- 2 GitOps projects created (ml-pipelines, infrastructure)
+- Comprehensive testing (11/12 PASS, 91.7%)
+- Full automation scripts và documentation
+
+**Next Phases**: GitHub Actions CI/CD (Phase 02), GitOps Structure (Phase 03), E2E Testing (Phase 04)
+
 ---
 
 ### 🔧 Supporting Folders
@@ -747,7 +771,8 @@ venv/, monai_env/              # Python virtual environments (DO NOT COMMIT)
 ### 👨‍💻 Developer muốn deploy
 1. ➡️ **Production Pipeline** ([hospital-mlops/covid-demo/README.md](hospital-mlops/covid-demo/README.md))
 2. ➡️ **Week 6-9** ([week6+7+8+9/README.md](week6+7+8+9/README.md)) → Database, scaling
-3. ➡️ **Docs** ([docs/](docs/)) → Architecture và deployment
+3. ➡️ **Week 10** ([week10/README.md](week10/README.md)) → CI/CD, GitOps với ArgoCD
+4. ➡️ **Docs** ([docs/](docs/)) → Architecture và deployment
 
 ### 🔬 Researcher muốn improve models
 1. ➡️ **Week 4** ([week4/README.md](week4/README.md)) → Model replacement strategies
@@ -765,14 +790,15 @@ venv/, monai_env/              # Python virtual environments (DO NOT COMMIT)
 | Hiểu COVID pipeline | [hospital-mlops/covid-demo/README.md](hospital-mlops/covid-demo/README.md) |
 | Tích hợp external models | [week4/README.md](week4/README.md) |
 | Deploy production | [week6+7+8+9/README.md](week6+7+8+9/README.md) |
+| Setup CI/CD & GitOps | [week10/README.md](week10/README.md) |
 | Download pretrained models | [models/README.md](models/README.md) |
 | Xem tài liệu kỹ thuật | [docs/README.md](docs/README.md) |
 | Tạo implementation plan | [plans/README.md](plans/README.md) |
 
 ---
 
-**Last Updated**: 2025-12-27
-**Version**: 2.1 (Comprehensive Folder Structure Guide)
+**Last Updated**: 2025-12-28
+**Version**: 2.2 (Added Week 10 - CI/CD & GitOps)
 
 
 
