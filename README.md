@@ -706,29 +706,47 @@ week6+7+8+9/
 
 **Topics**: Week 6 (Database), Week 7 (HPA), Week 8 (Deploy), Week 9 (Testing)
 
-#### Week 10 - CI/CD for ML Pipelines with GitOps
+#### Week 10 - CI/CD & GitOps
 ```
 week10/
-├── README.md                          # Tổng quan CI/CD & GitOps
-├── argocd-projects.yaml               # ArgoCD project definitions
-├── scripts/                           # Automation scripts
-│   ├── setup-argocd.ps1              # ArgoCD automated setup
-│   └── access-argocd-ui.ps1          # UI access helper
-├── test-argocd-comprehensive.sh       # 12 tests suite (91.7% pass)
-├── PHASE01-COMPLETION-REPORT.md       # Phase 01 summary
-├── TEST-RESULTS-SUMMARY.md            # Test results
-├── TESTING-METHODOLOGY.md             # Test methodology
-└── DELIVERABLES-INDEX.md              # All deliverables index
+├── README.md              # Tổng quan CI/CD & GitOps
+├── argocd/               # ArgoCD configurations
+│   ├── argocd-projects.yaml
+│   └── simple-test-app.yaml
+└── scripts/              # Automation scripts
+    ├── create-release.sh
+    └── test-argocd-comprehensive.sh
 ```
 **➡️ Xem chi tiết**: [week10/README.md](week10/README.md)
 
-**Phase 01 Status**: ✅ **HOÀN THÀNH** (ArgoCD Setup & Validation)
-- ArgoCD v3.1.9 deployed (7/7 pods Running)
-- 2 GitOps projects created (ml-pipelines, infrastructure)
-- Comprehensive testing (11/12 PASS, 91.7%)
-- Full automation scripts và documentation
+**Status**: ✅ **HOÀN THÀNH** (CI/CD & GitOps Automation)
 
-**Next Phases**: GitHub Actions CI/CD (Phase 02), GitOps Structure (Phase 03), E2E Testing (Phase 04)
+**GitHub Actions CI/CD**:
+- ✅ Pipeline CI Tests (lint, test, validation)
+- ✅ Docker Build & Push (auto-push to GHCR)
+- ✅ Security Scan (Trivy vulnerability scanner)
+- ✅ Release Automation (tag-based releases)
+
+**ArgoCD GitOps**:
+- ✅ ArgoCD deployed (7/7 pods Running)
+- ✅ Auto-sync enabled (sync from GitHub)
+- ✅ Demo application deployed
+
+**Docker Images**:
+- `ghcr.io/roosterhp/monai-kubeflow/demo-app:latest`
+- `ghcr.io/roosterhp/monai-kubeflow/demo-app:v1.0.1`
+
+**Quick Start**:
+```bash
+# Check workflows
+open https://github.com/roosterhp/MONAI-Kubeflow-/actions
+
+# Create release
+./week10/scripts/create-release.sh v1.0.2
+
+# Check ArgoCD
+kubectl get applications.argoproj.io -n argocd
+```
 
 ---
 
