@@ -1,0 +1,60 @@
+# ArgoCD Helm Values - Production HA Configuration
+# Reference: https://github.com/argoproj/argo-helm
+
+# High Availability Configuration
+redis:
+  enabled: true
+
+controller:
+  replicas: 2
+  args:
+    statusProcessors: "50"
+    operationProcessors: "25"
+  resources:
+    limits:
+      cpu: 2
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 2Gi
+
+repoServer:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+server:
+  replicas: 2
+  service:
+    type: ClusterIP  # Change to LoadBalancer for cloud providers
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Enable metrics for Prometheus scraping
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false  # Set to true if Prometheus Operator is installed
+
+# Notifications
+notifications:
+  enabled: true
+
+# Dex (SSO/OIDC)
+dex:
+  enabled: true
+
+# ApplicationSet Controller
+applicationSet:
+  enabled: true
+  replicas: 1

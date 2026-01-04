@@ -134,6 +134,402 @@ docker run --rm ghcr.io/roosterhp/monai-kubeflow/demo-app:latest
 
 ---
 
+## 📦 ArgoCD Installation Guide
+
+### Prerequisites
+
+Trước khi cài đặt ArgoCD, đảm bảo bạn có:
+- Kubernetes cluster đang chạy (Minikube, kind, hoặc production cluster)
+- `kubectl` đã cài đặt và configured
+- Quyền admin trên cluster
+
+### Bước 1: Cài đặt ArgoCD
+
+Có 2 cách cài đặt ArgoCD: **kubectl apply** (nhanh) hoặc **Helm** (production, highly available). Chọn một trong hai:
+
+#### Option 1: Kubectl Apply (Recommended cho Dev/Test)
+
+**1.1. Tạo namespace cho ArgoCD:**
+```bash
+kubectl create namespace argocd
+```
+
+**1.2. Cài đặt ArgoCD (sử dụng manifest chính thức):**
+```bash
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+**1.3. Đợi tất cả pods sẵn sàng (3-5 phút):**
+```bash
+# Watch pods cho đến khi tất cả Running
+kubectl get pods -n argocd --watch
+
+# Hoặc check một lần
+kubectl get pods -n argocd
+```
+
+**Expected output:**
+```
+NAME                                  READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0       1/1     Running   0          2m
+argocd-applicationset-controller-x    1/1     Running   0          2m
+argocd-dex-server-x                   1/1     Running   0          2m
+argocd-notifications-controller-x     1/1     Running   0          2m
+argocd-redis-x                        1/1     Running   0          2m
+argocd-repo-server-x                  1/1     Running   0          2m
+argocd-server-x                       1/1     Running   0          2m
+```
+
+#### Option 2: Helm Install (Recommended cho Production)
+
+**1.1. Add Argo Helm repository:**
+```bash
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+```
+
+**1.2. Tạo values file cho High Availability (optional):**
+```bash
+cat > argocd-values.yaml <<EOF
+# High Availability Configuration
+redis:
+  enabled: true
+
+controller:
+  replicas: 2
+  args:
+    statusProcessors: "50"
+    operationProcessors: "25"
+
+repoServer:
+  replicas: 2
+
+server:
+  replicas: 2
+  service:
+    type: ClusterIP  # Hoặc LoadBalancer nếu có cloud provider
+
+# Enable metrics
+metrics:
+  enabled: true
+
+# Notifications
+notifications:
+  enabled: true
+EOF
+```
+
+**1.3. Install ArgoCD với Helm:**
+```bash
+# Cài đặt với HA configuration
+helm install argocd argo/argo-cd \
+  -n argocd \
+  --create-namespace \
+  -f argocd-values.yaml
+
+# Hoặc install đơn giản (single replica)
+helm install argocd argo/argo-cd \
+  -n argocd \
+  --create-namespace
+```
+
+**1.4. Verify installation:**
+```bash
+# Check Helm release
+helm list -n argocd
+
+# Check pods
+kubectl get pods -n argocd
+```
+
+**Expected output (HA setup):**
+```
+NAME                                  READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0       1/1     Running   0          2m
+argocd-application-controller-1       1/1     Running   0          2m
+argocd-applicationset-controller-x    1/1     Running   0          2m
+argocd-dex-server-x                   1/1     Running   0          2m
+argocd-notifications-controller-x     1/1     Running   0          2m
+argocd-redis-x                        1/1     Running   0          2m
+argocd-repo-server-0                  1/1     Running   0          2m
+argocd-repo-server-1                  1/1     Running   0          2m
+argocd-server-0                       1/1     Running   0          2m
+argocd-server-1                       1/1     Running   0          2m
+```
+
+### Bước 2: Truy cập ArgoCD UI
+
+**2.1. Port forward ArgoCD server:**
+```bash
+# Mở terminal riêng và giữ command này chạy
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+**2.2. Lấy admin password:**
+```bash
+# Get password
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d && echo
+
+# Lưu password này lại!
+```
+
+**2.3. Login vào UI:**
+```bash
+# Mở browser
+open https://localhost:8080
+
+# Hoặc nếu dùng Linux
+xdg-open https://localhost:8080
+```
+
+**Credentials:**
+- **Username**: `admin`
+- **Password**: (password từ bước 2.2)
+
+**Lưu ý:** Browser có thể cảnh báo về certificate không hợp lệ, chọn "Proceed" hoặc "Advanced → Accept the Risk".
+
+### Bước 3: Cấu hình Projects
+
+**3.1. Tạo AppProjects (ml-pipelines và infrastructure):**
+```bash
+kubectl apply -f /root/MONAI-Kubeflow-/argocd-apps/appprojects.yaml
+```
+
+**3.2. Verify projects được tạo:**
+```bash
+kubectl get appproject -n argocd
+```
+
+**Expected output:**
+```
+NAME              AGE
+infrastructure    10s
+ml-pipelines      10s
+```
+
+### Bước 4: Deploy Applications
+
+**4.1. Deploy app-of-apps (master application):**
+```bash
+kubectl apply -f /root/MONAI-Kubeflow-/argocd-apps/app-of-apps.yaml
+```
+
+**4.2. Đợi child applications được tạo tự động (30-60 giây):**
+```bash
+kubectl get applications.argoproj.io -n argocd --watch
+```
+
+**Expected output:**
+```
+NAME                       SYNC STATUS   HEALTH STATUS
+covid-detection-pipeline   Synced        Healthy
+infrastructure-mysql       Synced        Healthy
+monai-kubeflow-master      Synced        Healthy
+scaling-hpa                Synced        Healthy
+```
+
+### Bước 5: Verify Deployment
+
+**5.1. Check tất cả applications đã sync:**
+```bash
+kubectl get applications.argoproj.io -n argocd
+```
+
+**5.2. Verify resources trong kubeflow namespace:**
+```bash
+# Check MySQL StatefulSet
+kubectl get statefulset mysql-statefulset -n kubeflow
+
+# Check HPA resources
+kubectl get hpa -n kubeflow
+```
+
+**5.3. Check trong ArgoCD UI:**
+- Vào https://localhost:8080
+- Bạn sẽ thấy 4 applications
+- Tất cả phải có status "Synced" và "Healthy"
+
+### Troubleshooting Common Issues
+
+#### Issue 1: Kustomize Deprecated Syntax Errors
+
+**Error:**
+```
+Error: no matches for Id StatefulSet.v1.apps/mysql-statefulset.[noNs]
+Warning: 'bases' is deprecated. Please use 'resources' instead.
+```
+
+**Fix:**
+```bash
+# Update kustomization.yaml files
+# Replace 'bases' → 'resources'
+# Replace 'commonLabels' → 'labels'
+# Replace 'patchesStrategicMerge' → 'patches'
+
+# Example fix in manifests/infrastructure/overlays/prod/kustomization.yaml:
+resources:
+  - ../../base
+
+patches:
+  - path: mysql-replicas-patch.yaml
+    target:
+      kind: StatefulSet
+      name: mysql-statefulset
+
+labels:
+  - pairs:
+      environment: production
+```
+
+#### Issue 2: Repository Permission Error
+
+**Error:**
+```
+InvalidSpecError: application repo https://github.com/OLD-REPO/MONAI-Kubeflow-.git
+is not permitted in project 'ml-pipelines'
+```
+
+**Root cause:** Application YAML files có repo URL cũ không match với AppProject whitelist.
+
+**Fix:**
+```bash
+# 1. Update all application YAMLs với repo đúng
+# argocd-apps/*.yaml phải có:
+source:
+  repoURL: https://github.com/roosterhp/MONAI-Kubeflow-.git
+
+# 2. Commit và push
+git add argocd-apps/*.yaml
+git commit -m "fix: Update repo URLs"
+git push origin main
+
+# 3. Delete và recreate applications
+kubectl delete application.argoproj.io --all -n argocd
+kubectl apply -f argocd-apps/app-of-apps.yaml
+
+# 4. Verify
+kubectl get applications.argoproj.io -n argocd
+```
+
+#### Issue 3: PersistentVolume Immutable Field Error
+
+**Error:**
+```
+PersistentVolume "mysql-statefulset-pv" is invalid:
+nodeAffinity: Invalid value: field is immutable
+```
+
+**Fix:**
+```bash
+# Remove PV from kustomization (PVs already exist and bound)
+# manifests/infrastructure/base/kustomization.yaml:
+resources:
+  - mysql-secret.yaml
+  - mysql-statefulset.yaml
+  # Removed: - mysql-pvc.yaml
+
+# StatefulSet volumeClaimTemplates will handle storage
+```
+
+#### Issue 4: App-of-apps Self-Management Loop
+
+**Error:** `monai-kubeflow-master` status stuck at "Unknown".
+
+**Fix:**
+```bash
+# Create .argocdignore to exclude app-of-apps.yaml
+# argocd-apps/.argocdignore:
+app-of-apps.yaml
+
+# This prevents circular dependency
+```
+
+#### Issue 5: ArgoCD Controller Not Syncing
+
+**Symptoms:** Applications stuck at "Unknown" status.
+
+**Fix:**
+```bash
+# Restart ArgoCD application controller
+kubectl rollout restart statefulset argocd-application-controller -n argocd
+
+# Wait for rollout to complete
+kubectl rollout status statefulset argocd-application-controller -n argocd
+
+# Verify
+kubectl get applications.argoproj.io -n argocd
+```
+
+### Verification Checklist
+
+Sau khi cài đặt, verify các items sau:
+
+- [ ] **ArgoCD Pods**: Tất cả 7-8 pods ở trạng thái Running
+- [ ] **ArgoCD UI**: Có thể truy cập qua https://localhost:8080
+- [ ] **AppProjects**: ml-pipelines và infrastructure projects tồn tại
+- [ ] **Applications**: 4 apps (master + 3 child apps) đều Synced + Healthy
+- [ ] **Kubeflow Resources**: MySQL StatefulSet, HPAs đang chạy
+- [ ] **Repository URLs**: Tất cả apps dùng repo đúng (không có NT114 hay repo cũ)
+
+### ArgoCD CLI (Optional)
+
+**Cài đặt ArgoCD CLI:**
+```bash
+# Linux
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+
+# Mac
+brew install argocd
+```
+
+**Login qua CLI:**
+```bash
+# Login (sử dụng password từ bước 2.2)
+argocd login localhost:8080
+
+# List applications
+argocd app list
+
+# Sync specific app
+argocd app sync infrastructure-mysql
+
+# Get app details
+argocd app get infrastructure-mysql
+```
+
+### Uninstall ArgoCD (Nếu cần)
+
+**Nếu cài bằng kubectl apply:**
+```bash
+# Delete all applications first
+kubectl delete applications.argoproj.io --all -n argocd
+
+# Delete ArgoCD
+kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Delete namespace
+kubectl delete namespace argocd
+```
+
+**Nếu cài bằng Helm:**
+```bash
+# Delete all applications first
+kubectl delete applications.argoproj.io --all -n argocd
+
+# Uninstall Helm release
+helm uninstall argocd -n argocd
+
+# Delete namespace
+kubectl delete namespace argocd
+
+# Cleanup any PVCs (if using persistent storage)
+kubectl delete pvc --all -n argocd
+```
+
+---
+
 ## 🔧 Workflows Configuration
 
 ### Pipeline CI Tests (`.github/workflows/pipeline-test.yml`)
@@ -336,5 +732,5 @@ kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.pas
 
 ---
 
-**Last Updated**: 2025-12-29
-**Version**: v1.0.1
+**Last Updated**: 2026-01-05
+**Version**: v1.1.0 (Added ArgoCD Installation Guide)
