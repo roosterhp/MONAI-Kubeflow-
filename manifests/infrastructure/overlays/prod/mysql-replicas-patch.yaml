@@ -2,5 +2,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-statefulset
+  namespace: kubeflow
 spec:
   replicas: 3  # Production: 3 replicas for HA

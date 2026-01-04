@@ -8,7 +8,8 @@ resources:
   - mysql-pvc.yaml
   - mysql-statefulset.yaml
 
-commonLabels:
-  app: mysql
-  component: infrastructure
-  version: week6
+labels:
+  - pairs:
+      app: mysql
+      component: infrastructure
+      version: week6

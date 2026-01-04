@@ -3,11 +3,15 @@ kind: Kustomization
 
 namespace: kubeflow
 
-bases:
+resources:
   - ../../base
 
-patchesStrategicMerge:
-  - mysql-replicas-patch.yaml
+patches:
+  - path: mysql-replicas-patch.yaml
+    target:
+      kind: StatefulSet
+      name: mysql-statefulset
 
-commonLabels:
-  environment: production
+labels:
+  - pairs:
+      environment: production
