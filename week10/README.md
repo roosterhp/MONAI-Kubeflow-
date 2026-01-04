@@ -189,6 +189,9 @@ helm repo update
 ```
 
 **1.2. Tạo values file cho High Availability (optional):**
+
+Tạo file mới hoặc dùng file reference có sẵn tại `week10/argocd-values.yaml`:
+
 ```bash
 cat > argocd-values.yaml <<EOF
 # High Availability Configuration

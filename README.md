@@ -815,8 +815,66 @@ venv/, monai_env/              # Python virtual environments (DO NOT COMMIT)
 
 ---
 
-**Last Updated**: 2025-12-28
-**Version**: 2.2 (Added Week 10 - CI/CD & GitOps)
+## 📝 Recent Updates (2026-01-05)
+
+### ArgoCD GitOps Fixes & Enhancements
+
+**Fixed Critical Issues:**
+- ✅ **Kustomize Syntax Errors**: Updated all manifests from deprecated syntax to latest format
+  - `bases` → `resources`
+  - `commonLabels` → `labels`
+  - `patchesStrategicMerge` → `patches` with explicit targeting
+- ✅ **Repository Permission Errors**: Fixed InvalidSpecError by updating all app repo URLs
+  - Changed from `NT114DevSecOpsProject` to `roosterhp` repository
+  - Updated argocd-apps/*.yaml and committed to Git
+- ✅ **PersistentVolume Immutable Field Error**: Removed PV from kustomization (managed by StatefulSet)
+- ✅ **App-of-apps Self-Management**: Added `.argocdignore` to prevent circular dependency
+
+**Files Updated:**
+- `manifests/infrastructure/base/kustomization.yaml`
+- `manifests/infrastructure/overlays/prod/kustomization.yaml`
+- `manifests/infrastructure/overlays/prod/mysql-replicas-patch.yaml`
+- `manifests/scaling/base/kustomization.yaml`
+- `manifests/scaling/overlays/prod/kustomization.yaml`
+- `manifests/scaling/overlays/prod/hpa-thresholds-patch.yaml`
+- `argocd-apps/*.yaml` (all application definitions)
+- `argocd-apps/.argocdignore`
+
+**Documentation Enhancements:**
+- ✅ **Comprehensive ArgoCD Installation Guide** added to `week10/README.md`
+  - Two installation methods: kubectl apply (dev/test) and Helm (production HA)
+  - Step-by-step instructions for both methods
+  - Troubleshooting guide with 5 common issues and fixes
+  - Verification checklist
+  - ArgoCD CLI usage guide
+  - Uninstall instructions
+- ✅ **ArgoCD Helm Values**: Added `week10/argocd-values.yaml` for production HA setup
+
+**Current Status:**
+```
+ArgoCD Applications:
+✅ covid-detection-pipeline   Synced  Healthy
+✅ infrastructure-mysql       Synced  Healthy
+✅ monai-kubeflow-master      Synced  Healthy
+✅ scaling-hpa                Synced  Healthy
+
+Kubeflow Resources:
+✅ MySQL StatefulSet:  3/3 replicas
+✅ HPA Resources:      7 autoscalers active
+```
+
+**Commits:**
+- [6c72855](https://github.com/roosterhp/MONAI-Kubeflow-/commit/6c72855) - Fix infrastructure kustomize syntax
+- [51a00d9](https://github.com/roosterhp/MONAI-Kubeflow-/commit/51a00d9) - Remove PV from kustomization
+- [9cede5a](https://github.com/roosterhp/MONAI-Kubeflow-/commit/9cede5a) - Fix scaling kustomize syntax
+- [ed79e87](https://github.com/roosterhp/MONAI-Kubeflow-/commit/ed79e87) - Add .argocdignore
+- [e611f17](https://github.com/roosterhp/MONAI-Kubeflow-/commit/e611f17) - Update app repo URLs
+- [839dc1b](https://github.com/roosterhp/MONAI-Kubeflow-/commit/839dc1b) - Add ArgoCD installation guide
+
+---
+
+**Last Updated**: 2026-01-05
+**Version**: 2.3 (ArgoCD GitOps Fixes & Installation Guide)
 
 
 
