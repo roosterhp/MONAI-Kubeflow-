@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: ml-pipeline-hpa
+  namespace: kubeflow
 spec:
   metrics:
     - type: Resource

@@ -6,6 +6,7 @@ namespace: kubeflow
 resources:
   - kubeflow-hpa.yaml
 
-commonLabels:
-  component: scaling
-  version: week7
+labels:
+  - pairs:
+      component: scaling
+      version: week7

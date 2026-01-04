@@ -3,8 +3,11 @@ kind: Kustomization
 
 namespace: kubeflow
 
-bases:
+resources:
   - ../../base
 
-patchesStrategicMerge:
-  - hpa-thresholds-patch.yaml
+patches:
+  - path: hpa-thresholds-patch.yaml
+    target:
+      kind: HorizontalPodAutoscaler
+      name: ml-pipeline-hpa
