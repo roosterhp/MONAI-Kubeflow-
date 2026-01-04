@@ -9,7 +9,7 @@ metadata:
 spec:
   project: infrastructure
   source:
-    repoURL: https://github.com/NT114DevSecOpsProject/MONAI-Kubeflow-.git
+    repoURL: https://github.com/roosterhp/MONAI-Kubeflow-.git
     targetRevision: main
     path: manifests/infrastructure/overlays/prod
   destination:

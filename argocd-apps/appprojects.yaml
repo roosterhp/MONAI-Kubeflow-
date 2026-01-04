@@ -1,0 +1,56 @@
+---
+# AppProject for ML Pipelines
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ml-pipelines
+  namespace: argocd
+spec:
+  description: MONAI ML Pipelines and Kubeflow workflows
+
+  # Allow all source repos (can be restricted later)
+  sourceRepos:
+    - 'https://github.com/roosterhp/MONAI-Kubeflow-.git'
+
+  # Allow deployment to kubeflow and argocd namespaces
+  destinations:
+    - namespace: 'kubeflow'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'argocd'
+      server: 'https://kubernetes.default.svc'
+
+  # Allow all cluster resources (can be restricted later)
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+---
+# AppProject for Infrastructure
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  description: Infrastructure components (database, storage, scaling)
+
+  sourceRepos:
+    - 'https://github.com/roosterhp/MONAI-Kubeflow-.git'
+
+  destinations:
+    - namespace: 'kubeflow'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'default'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
