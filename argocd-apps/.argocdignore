@@ -1,0 +1,2 @@
+# Ignore app-of-apps.yaml to prevent self-management circular dependency
+app-of-apps.yaml
