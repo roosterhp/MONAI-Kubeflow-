@@ -19,4 +19,6 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - minikube  # Changed for Minikube
+          - k8s-master-1
+          - k8s-master-2
+          - k8s-master-3

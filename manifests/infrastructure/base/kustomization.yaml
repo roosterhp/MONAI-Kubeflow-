@@ -5,7 +5,6 @@ namespace: kubeflow
 
 resources:
   - mysql-secret.yaml
-  - mysql-pvc.yaml
   - mysql-statefulset.yaml
 
 labels:
